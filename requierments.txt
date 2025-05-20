@@ -1,0 +1,6 @@
+# This is requirements list for the project
+# It is used to install the dependencies for the project
+# You can install the dependencies using the following command
+# pip install -r requirements.txt
+
+torch>=2.0.1
