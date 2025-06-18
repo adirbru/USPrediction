@@ -4,3 +4,8 @@
 # pip install -r requirements.txt
 
 torch>=2.0.1
+torchvision
+segmentation-models-pytorch
+albumentations
+opencv-python
+tqdm
