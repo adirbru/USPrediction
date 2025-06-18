@@ -1,2 +1,5 @@
 # ignore vscode files
 .vscode/
+
+# ignore dataset/processed
+dataset/processed/
