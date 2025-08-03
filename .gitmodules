@@ -1,0 +1,3 @@
+[submodule "code/xmem"]
+	path = code/xmem
+	url = https://github.com/hkchengrex/XMem.git
