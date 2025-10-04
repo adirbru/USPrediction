@@ -70,44 +70,4 @@ def validate(model, loader, criterion, device):
 
     return val_loss / len(loader.dataset)
 
-
-def main():
-    # Parameters
-    training_epochs = 50
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Create datasets & loaders
-    train_ds = USSegmentationDataset(TRAIN_IMG_DIR, TRAIN_MASK_DIR, transforms=train_transform)
-    val_ds   = USSegmentationDataset(VAL_IMG_DIR, VAL_MASK_DIR, transforms=val_transform)
-
-    train_loader = DataLoader(train_ds, batch_size=8, shuffle=True,  num_workers=4)
-    val_loader   = DataLoader(val_ds,   batch_size=8, shuffle=False, num_workers=4)
-
-    # Model, loss, optimizer
-    model = get_model().to(device)
-    # Use NLLLoss since we converted to log-probs; it’s equivalent to CE on logits
-    criterion = nn.NLLLoss()                                # TODO Check loss correctness
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)     # TODO Check optimizer correctness
-
-    best_val_loss = float("inf")
-    
-    for epoch in range(1, training_epochs + 1):
-        print(f"\nEpoch {epoch}/{training_epochs}")
-        train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        val_loss   = validate(model, val_loader, criterion, device)
-
-        print(f"  Train Loss: {train_loss:.4f}")
-        print(f"  Val   Loss: {val_loss:.4f}")
-
-        # Save checkpoint
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(model.state_dict(), CHECKPOINT_PATH)
-            print("  Saved new best model.")
-
-    print("Training complete.")
-
-
-if __name__ == "__main__":
-    main()
+class UNetTrainer:
