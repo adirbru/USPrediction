@@ -236,8 +236,8 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         logging.info(f"Video successfully created at {output_video}")
         return True
     
-    except Exception as e:
-        logging.exception(f"Error creating video")
+    except Exception:
+        logging.exception("Error creating video")
         return False
 
 if __name__ == "__main__":
