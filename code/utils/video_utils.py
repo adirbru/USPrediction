@@ -221,7 +221,7 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         
         height, width, _ = first_frame.shape
         
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter.fourcc(*'mp4v')
         video_writer = cv2.VideoWriter(str(output_video), fourcc, fps, (width, height))
         
         # Write each frame to video
