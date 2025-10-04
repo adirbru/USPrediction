@@ -239,11 +239,3 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
     except Exception:
         logging.exception("Error creating video")
         return False
-
-if __name__ == "__main__":
-    raw_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/code/dataset/processed/frames/recordings_01_enrollment01_multi_playing01"
-    seg_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/xmem_output/recordings_01_enrollment01_multi_playing01/masks"
-    output_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/xmem_output/recordings_01_enrollment01_multi_playing01/overlays"
-    
-    overlay_segmentations(raw_folder, seg_folder, output_folder, opacity=0.15)
-    create_video_from_frames(output_folder, fps=20)
