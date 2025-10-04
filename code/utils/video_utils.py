@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from pathlib import Path
 import logging
+import torch
+from dataclasses import dataclass, field
 from typing import Union, Tuple, List, Dict
 
 # Configure logging
@@ -19,6 +21,65 @@ COLOR_PALETTE = [
     (128, 0, 128),  # Purple
     (255, 165, 0),  # Orange
 ]
+
+@dataclass
+class Video:
+    path: Path
+    frames: list[Path] = field(default_factory=list)
+
+    def split_to_frames(self, output_dir: Path):
+        """Extract frames from video and save to output_dir with given prefix"""
+        cap = cv2.VideoCapture(str(self.path))
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {self.path}")
+
+        frame_index = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                logging.info(f"Finished extracting {frame_index} frames from {self.path}")
+                break
+            frame_path = output_dir / f"frame_{frame_index:06d}.png"
+            cv2.imwrite(str(frame_path), frame)
+            frame_index += 1
+            self.frames.append(frame_path)
+        cap.release()
+    
+    def __getitem__(self, index):
+        return self.frames[index]
+
+class RawVideo(Video):
+    def __init__(self, path: Path):
+        super().__init__(path=path)
+
+    def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
+        # Load grayscale image
+        img = cv2.imread(self.frames[frame_index], cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            raise ValueError(f"Could not load image: {self.frames[frame_index]}")
+        # Normalize & add channel dim
+        img = img.astype(np.float32) / 255.0
+        img = np.expand_dims(img, 0)  # (1, H, W)
+        return torch.tensor(img)
+    
+
+class MaskedVideo(Video):
+    def __init__(self, path: Path):
+        super().__init__(path=path)
+
+    def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
+        mask = cv2.imread(self.frames[frame_index], cv2.IMREAD_COLOR)
+        if mask is None:
+            raise ValueError(f"Could not load mask: {self.frames[frame_index]}")
+
+        # Convert mask from RGB to class indices
+        h, w, _ = mask.shape
+        label = np.zeros((h, w), dtype=np.int64)
+        for idx_cls, rgb in enumerate(COLOR_PALETTE):
+            matches = np.all(mask == rgb, axis=-1)
+            label[matches] = idx_cls
+        return torch.tensor(label)
+
 
 def get_sorted_frames(folder: Union[str, Path], extension: str = ".png") -> List[Path]:
     folder = Path(folder)
