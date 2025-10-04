@@ -2,5 +2,9 @@
 .vscode/
 
 # ignore dataset/processed
-dataset/processed/
-code/dataset/processed/
+*.png
+*.xml
+*.mp4
+*.npy
+code/USPrediction.egg-info/
+code/build/
