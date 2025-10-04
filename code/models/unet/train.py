@@ -36,53 +36,6 @@ COLOR2IDX = {
 IDX2COLOR = {v: k for k, v in COLOR2IDX.items()}
 
 
-# 3) Custom Dataset
-class USSegmentationDataset(Dataset):
-    def __init__(self, img_dir, mask_dir, transforms=None):
-        self.img_paths  = sorted(glob(os.path.join(img_dir, "*")))
-        self.mask_paths = sorted(glob(os.path.join(mask_dir, "*")))
-        self.transforms = transforms
-
-        assert len(self.img_paths) == len(self.mask_paths), \
-            "Image and mask counts do not match"
-
-    def __len__(self):
-        return len(self.img_paths)
-
-    def __getitem__(self, idx):
-        # load grayscale image
-        img = cv2.imread(self.img_paths[idx], cv2.IMREAD_GRAYSCALE)
-        # load color mask
-        mask = cv2.imread(self.mask_paths[idx], cv2.IMREAD_COLOR)
-
-        # apply any albumentations transforms
-        if self.transforms:
-            augmented = self.transforms(image=img, mask=mask)
-            img, mask = augmented["image"], augmented["mask"]
-
-        # normalize & add channel dim
-        img = img.astype(np.float32) / 255.0
-        img = np.expand_dims(img, 0)  # (1, H, W)
-
-        # convert mask from RGB to class indices
-        h, w, _ = mask.shape
-        label = np.zeros((h, w), dtype=np.int64)
-        for rgb, idx_cls in COLOR2IDX.items():
-            matches = np.all(mask == rgb, axis=-1)
-            label[matches] = idx_cls
-
-        return torch.tensor(img), torch.tensor(label)
-    
-# 4) Transforms (you can add flips, rotations, etc.) # TODO: Add as function
-train_transform = A.Compose([
-    A.Resize(256, 256),
-    A.HorizontalFlip(p=0.5),
-])
-val_transform = A.Compose([
-    A.Resize(256, 256),
-])
-
-
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
