@@ -11,20 +11,6 @@ from loader import get_model
 
 from dataset import USSegmentationDataset
 
-# 2) Define your color→class-index mapping
-COLOR2IDX = {
-    (  0,   0,   0): 0,  # background
-    (255,   0,   0): 1,  # muscle 1
-    (  0, 255,   0): 2,  # muscle 2
-    (  0,   0, 255): 3,  # muscle 3
-    (255, 255,   0): 4,  # muscle 4
-    (255,   0, 255): 5,  # muscle 5
-    (  0, 255, 255): 6,  # muscle 6
-    # add/remove entries to match your 7 classes
-}
-
-IDX2COLOR = {v: k for k, v in COLOR2IDX.items()}
-
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()

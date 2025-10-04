@@ -9,7 +9,7 @@ from typing import Union, Tuple, List, Dict
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Define a palette of distinct BGR colors for mapping grayscale values
+# TODO: Change the color palette to use k-means clustering to find distinct colors
 COLOR_PALETTE = [
     (0, 0, 0),      # Black (for background)
     (0, 255, 0),    # Green
