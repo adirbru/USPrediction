@@ -9,7 +9,7 @@ def get_model():
                      encoder_weights="imagenet",        # Pre-trained on ImageNet
                      in_channels=1,                     # US image is grayscale
                      classes=7,                         # 7 muscle groups for segmentation    
-                     activation="softmax")
+                     activation=None)
     return model
 
 

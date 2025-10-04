@@ -45,17 +45,13 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
 
         optimizer.zero_grad()
         outputs = model(imgs)                   # (N, classes, H, W)
-                                                # segmentation-models-pytorch with activation="softmax" returns probabilities;
-                                                # CrossEntropyLoss expects raw logits. So either:
-                                                #  - change activation to None and rely on logits + CE, or
-                                                #  - here, wrap it manually:
-        outputs = torch.log(outputs + 1e-8)     # to get log-probs
 
         loss = criterion(outputs, masks)
         loss.backward()
         optimizer.step()
 
         running_loss += loss.item() * imgs.size(0)
+        print(f"  Batch loss: {loss.item():.4f}")
 
     return running_loss / len(loader.dataset)
 
@@ -69,7 +65,6 @@ def validate(model, loader, criterion, device):
             masks = masks.to(device)
 
             outputs = model(imgs)
-            outputs = torch.log(outputs + 1e-8)
             loss = criterion(outputs, masks)
             val_loss += loss.item() * imgs.size(0)
 
