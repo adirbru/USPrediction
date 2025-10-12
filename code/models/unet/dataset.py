@@ -2,6 +2,7 @@ import os
 from torch.utils.data import Dataset
 from pathlib import Path
 import logging
+import re
 
 from utils.video_utils import RawVideo, MaskedVideo
 
@@ -53,14 +54,15 @@ class USSegmentationDataset(Dataset):
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         self.videos: list[DatasetVideo] = []
+        self.subject_to_frames: dict[str, range] = {}
         
         # Process videos to extract frames
         self._process_videos(raw_video_dir, masked_video_dir)
 
-        logging.info(f"Dataset initialized with {len(self.videos)} video pairs")
+        logging.info(f"Dataset initialized with {len(self.videos)} video pairs.")
 
     def _process_videos(self, raw_video_dir: str, masked_video_dir: str):
-        """Process video files to extract frames"""
+        """Process video files to extract frames and organize by subject"""
         logging.info("Processing videos to extract frames...")
 
         for video_name in os.listdir(raw_video_dir):
@@ -71,14 +73,31 @@ class USSegmentationDataset(Dataset):
                 if not raw_video_path.exists() or not masked_video_path.exists():
                     logging.warning(f"Video pair not found for {video_name}, skipping...")
                     continue
-                
+                                
                 dataset_video = DatasetVideo(raw_video=raw_video_path, 
                                             masked_video=masked_video_path, 
                                             output_dir=self.temp_dir)
                 dataset_video.split_to_frames()
+
+                # Extract subject ID from video name (e.g., recordings_01_enrollment01... -> subject 01)
+                subject_id = self._extract_subject_id(video_name)
+                if subject_id is None:
+                    logging.warning(f"Could not extract subject ID from {video_name}, skipping...")
+                    continue
+
+                last_frame = max([rng.stop for rng in self.subject_to_frames.values()], default=0)
+                self.subject_to_frames[subject_id] = range(last_frame, last_frame + len(dataset_video))
                 self.videos.append(dataset_video)
+                
             except Exception:
                 logging.exception(f"Error processing video {video_name}, skipping...")
+    
+    def _extract_subject_id(self, video_name: str) -> str:
+        """Extract subject ID from video filename"""
+        match = re.match(r"recordings_(?P<subject_id>\d+).*mp4", video_name)
+        if match:
+            return match.group("subject_id")
+        return None
 
     def __len__(self):
         return sum(len(video) for video in self.videos)
@@ -103,3 +122,15 @@ class USSegmentationDataset(Dataset):
         mask_matrix = video.masked.get_frame_matrix(frame_index)
         
         return img_matrix, mask_matrix
+    
+    def get_subject_ids(self):
+        """Get list of all subject IDs"""
+        return list(self.subject_to_frames.keys())
+    
+    def get_video_indices_for_subjects(self, subject_ids):
+        """Get all frame indices for given subject IDs"""
+        indices = []
+        for subject_id in subject_ids:
+            if subject_id in self.subject_to_frames:
+                indices.extend(self.subject_to_frames[subject_id])
+        return indices

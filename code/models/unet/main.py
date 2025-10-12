@@ -35,11 +35,11 @@ def parse_args():
     parser.add_argument('--temp_dir', type=str,
                         help='Temporary directory to store extracted frames')
     
-    # Cross-validation
-    parser.add_argument('--k_folds', type=int,
-                        help='Number of folds for k-fold cross-validation')
+    # Subject-based split
+    parser.add_argument('--train_ratio', type=float,
+                        help='Ratio of subjects to use for training')
     parser.add_argument('--random_seed', type=int,
-                        help='Random seed for reproducible cross-validation splits')
+                        help='Random seed for reproducible subject splits')
     
     # Training parameters
     parser.add_argument('--epochs', type=int,
@@ -75,7 +75,7 @@ def parse_args():
         args.__dict__.update(config_args)
 
     # Validate required arguments
-    required_args = ['raw_video_dir', 'masked_video_dir', 'k_folds', 'epochs', 'batch_size', 
+    required_args = ['raw_video_dir', 'masked_video_dir', 'epochs', 'batch_size', 
                      'learning_rate', 'checkpoint_path']
 
     missing_args = [arg for arg in required_args if getattr(args, arg) is None]

@@ -1,14 +1,14 @@
 # train.py
 
 import torch
-import numpy as np
+import logging
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Subset
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import KFold
-from loader import get_model
+from sklearn.model_selection import train_test_split
 
+from loader import get_model
 from dataset import USSegmentationDataset
 
 
@@ -27,7 +27,7 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
         optimizer.step()
 
         running_loss += loss.item() * imgs.size(0)
-        print(f"  Batch loss: {loss.item():.4f}")
+        logging.info(f"  Batch loss: {loss.item():.4f}")
 
     return running_loss / len(loader.dataset)
 
@@ -47,18 +47,16 @@ def validate(model, loader, criterion, device):
     return val_loss / len(loader.dataset)
 
 class UNetTrainer:
-    """U-Net trainer with k-fold cross-validation support"""
+    """U-Net trainer with subject-based train/validation split"""
     
     def __init__(self, args):
         self.args = args
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.all_fold_results = []
-        self.best_overall_val_loss = float("inf")
-        self.best_fold_model = None
+        self.best_val_loss = float("inf")
+        self.best_model = None
         
-        print(f"Using device: {self.device}")
-        print(f"Training parameters: epochs={args.epochs}, batch_size={args.batch_size}, lr={args.learning_rate}")
-        print(f"Cross-validation: {args.k_folds}-fold CV")
+        logging.info(f"Using device: {self.device}")
+        logging.info(f"Training parameters: epochs={args.epochs}, batch_size={args.batch_size}, lr={args.learning_rate}")
     
     def create_dataset(self):
         """Create the full dataset from video files"""
@@ -69,115 +67,122 @@ class UNetTrainer:
         )
         return dataset
 
-    def setup_cross_validation(self, dataset_size):
-        """Setup k-fold cross-validation"""
-        kfold = KFold(n_splits=self.args.k_folds, shuffle=True, random_state=self.args.random_seed)
-        indices = np.arange(dataset_size)
-        return kfold, indices
+    def setup_subject_split(self, dataset):
+        """Setup subject-based train/validation split"""
+        subject_ids = dataset.get_subject_ids()
+
+        # Use args.train_ratio for training, 1 - args.train_ratio for validation
+        train_subjects, val_subjects = train_test_split(
+            subject_ids, 
+            test_size=1 - self.args.train_ratio, 
+            random_state=self.args.random_seed,
+            shuffle=True
+        )
+        
+        logging.info("Subject split:")
+        logging.info(f"  Train subjects ({len(train_subjects)}): {sorted(train_subjects)}")
+        logging.info(f"  Validation subjects ({len(val_subjects)}): {sorted(val_subjects)}")
+        
+        # Get frame indices for each split
+        train_indices = dataset.get_video_indices_for_subjects(train_subjects)
+        val_indices = dataset.get_video_indices_for_subjects(val_subjects)
+        
+        return train_indices, val_indices, train_subjects, val_subjects
     
-    def train_fold(self, model, train_loader, val_loader, criterion, optimizer, epochs, fold_num):
-        """Train model for one fold of cross-validation"""
-        best_val_loss = float("inf")
-        fold_train_losses = []
-        fold_val_losses = []
+    def train_model(self, model, train_loader, val_loader, criterion, optimizer, epochs):
+        """Train model with subject-based validation"""
+        train_losses = []
+        val_losses = []
         
         for epoch in range(1, epochs + 1):
-            print(f"  Fold {fold_num} - Epoch {epoch}/{epochs}")
+            logging.info(f"Epoch {epoch}/{epochs}")
             train_loss = train_one_epoch(model, train_loader, criterion, optimizer, self.device)
             val_loss = validate(model, val_loader, criterion, self.device)
             
-            fold_train_losses.append(train_loss)
-            fold_val_losses.append(val_loss)
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
             
-            print(f"    Train Loss: {train_loss:.4f}")
-            print(f"    Val   Loss: {val_loss:.4f}")
+            logging.info(f"  Train Loss: {train_loss:.4f}")
+            logging.info(f"  Val   Loss: {val_loss:.4f}")
             
-            # Save best model for this fold
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            # Save best model
+            if val_loss < self.best_val_loss:
+                self.best_val_loss = val_loss
+                self.best_model = model.state_dict().copy()
+                logging.info(f"  New best model saved (val_loss: {val_loss:.4f})")
         
-        return best_val_loss, fold_train_losses, fold_val_losses
+        return train_losses, val_losses
     
-    def run_cross_validation(self, dataset: USSegmentationDataset):
-        """Run the complete k-fold cross-validation process"""
-        # Setup cross-validation
-        kfold, indices = self.setup_cross_validation(len(dataset))
-
-        print(f"\nStarting {self.args.k_folds}-fold cross-validation...")
+    def run_training(self, dataset: USSegmentationDataset):
+        """Run the complete subject-based training process"""
+        # Setup subject-based split
+        train_indices, val_indices, train_subjects, val_subjects = self.setup_subject_split(dataset)
         
-        for fold, (train_indices, val_indices) in enumerate(kfold.split(indices), 1):
-            print(f"\n{'='*50}")
-            print(f"FOLD {fold}/{self.args.k_folds}")
-            print(f"Train samples: {len(train_indices)}, Validation samples: {len(val_indices)}")
-            print(f"{'='*50}")
-            
-            # Create subsets
-            train_subset = Subset(dataset, train_indices.tolist())
-            val_subset = Subset(dataset, val_indices.tolist())
+        logging.info(f"\n{'='*60}")
+        logging.info("SUBJECT-BASED TRAINING")
+        logging.info(f"{'='*60}")
+        logging.info(f"Train samples: {len(train_indices)} (from {len(train_subjects)} subjects)")
+        logging.info(f"Validation samples: {len(val_indices)} (from {len(val_subjects)} subjects)")
+        logging.info(f"{'='*60}")
+        
+        # Create subsets
+        train_subset = Subset(dataset, train_indices)
+        val_subset = Subset(dataset, val_indices)
 
-            # Create data loaders
-            train_loader = DataLoader(train_subset, batch_size=self.args.batch_size, shuffle=True, num_workers=self.args.num_workers)
-            val_loader = DataLoader(val_subset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
-            
-            # Create fresh model for this fold
-            model = get_model().to(self.device)
-            criterion = nn.CrossEntropyLoss()
-            optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
-            
-            # Train this fold
-            best_val_loss, train_losses, val_losses = self.train_fold(
-                model, train_loader, val_loader, criterion, optimizer, self.args.epochs, fold
-            )
-            
-            # Store results
-            fold_result = {
-                'fold': fold,
-                'best_val_loss': best_val_loss,
-                'train_losses': train_losses,
-                'val_losses': val_losses,
-                'train_size': len(train_indices),
-                'val_size': len(val_indices)
-            }
-            self.all_fold_results.append(fold_result)
-            
-            # Track best overall model
-            if best_val_loss < self.best_overall_val_loss:
-                self.best_overall_val_loss = best_val_loss
-                self.best_fold_model = model.state_dict().copy()
-            
-            print(f"Fold {fold} completed - Best validation loss: {best_val_loss:.4f}")
+        # Create data loaders
+        train_loader = DataLoader(train_subset, batch_size=self.args.batch_size, shuffle=True, num_workers=self.args.num_workers)
+        val_loader = DataLoader(val_subset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
+        
+        # Create model
+        model = get_model().to(self.device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
+        
+        # Train model
+        train_losses, val_losses = self.train_model(
+            model, train_loader, val_loader, criterion, optimizer, self.args.epochs
+        )
+        
+        # Store results
+        self.training_results = {
+            'train_subjects': train_subjects,
+            'val_subjects': val_subjects,
+            'train_size': len(train_indices),
+            'val_size': len(val_indices),
+            'final_train_loss': train_losses[-1],
+            'final_val_loss': val_losses[-1],
+            'best_val_loss': self.best_val_loss,
+            'train_losses': train_losses,
+            'val_losses': val_losses
+        }
     
     def save_best_model(self):
-        """Save the best model across all folds"""
-        if self.best_fold_model is not None:
-            torch.save(self.best_fold_model, self.args.checkpoint_path)
-            print(f"\nSaved best model (val_loss: {self.best_overall_val_loss:.4f}) to {self.args.checkpoint_path}")
+        """Save the best model"""
+        if self.best_model is not None:
+            torch.save(self.best_model, self.args.checkpoint_path)
+            logging.info(f"\nSaved best model (val_loss: {self.best_val_loss:.4f}) to {self.args.checkpoint_path}")
     
     def print_summary(self):
-        """Print cross-validation summary"""
-        print(f"\n{'='*60}")
-        print("CROSS-VALIDATION SUMMARY")
-        print(f"{'='*60}")
+        """logging.info training summary"""
+        logging.info(f"\n{'='*60}")
+        logging.info("TRAINING SUMMARY")
+        logging.info(f"{'='*60}")
         
-        val_losses = [result['best_val_loss'] for result in self.all_fold_results]
-        mean_val_loss = np.mean(val_losses)
-        std_val_loss = np.std(val_losses)
+        results = self.training_results
         
-        print(f"Number of folds: {self.args.k_folds}")
-        print(f"Mean validation loss: {mean_val_loss:.4f} ± {std_val_loss:.4f}")
-        print(f"Best validation loss: {min(val_losses):.4f}")
-        print(f"Worst validation loss: {max(val_losses):.4f}")
+        logging.info(f"Training subjects: {sorted(results['train_subjects'])} ({len(results['train_subjects'])} subjects)")
+        logging.info(f"Validation subjects: {sorted(results['val_subjects'])} ({len(results['val_subjects'])} subjects)")
+        logging.info(f"Training samples: {results['train_size']}")
+        logging.info(f"Validation samples: {results['val_size']}")
+        logging.info(f"Final training loss: {results['final_train_loss']:.4f}")
+        logging.info(f"Final validation loss: {results['final_val_loss']:.4f}")
+        logging.info(f"Best validation loss: {results['best_val_loss']:.4f}")
         
-        print("Per-fold results:")
-        for result in self.all_fold_results:
-            print(f"  Fold {result['fold']}: {result['best_val_loss']:.4f} "
-                  f"(train: {result['train_size']}, val: {result['val_size']})")
-        
-        print("\nCross-validation complete!")
+        logging.info("\nTraining complete!")
     
     def run(self):
         """Main training pipeline"""
         dataset = self.create_dataset()
-        self.run_cross_validation(dataset)
+        self.run_training(dataset)
         self.save_best_model()
         self.print_summary()

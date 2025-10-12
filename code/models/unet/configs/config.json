@@ -4,8 +4,8 @@
     "masked_video_dir": "dataset/processed/videos/masks",
     "temp_dir": "./temp_frames"
   },
-  "cross_validation": {
-    "k_folds": 5,
+  "split": {
+    "train_ratio": 0.9,
     "random_seed": 42
   },
   "training": {

@@ -9,7 +9,7 @@ This project implements a deep learning pipeline for ultrasound image segmentati
 ## Features
 
 - **U-Net Architecture**: ResNet34 encoder with ImageNet pre-trained weights
-- **K-Fold Cross-Validation**: Robust model evaluation with configurable fold counts
+- **Subject-Based Validation**: Train on 75% of subjects, validate on 25% to prevent data leakage
 - **Video Processing**: Automatic extraction of frames from video files
 - **Multi-Class Segmentation**: Supports up to 7 muscle groups
 - **Data Augmentation**: Configurable image augmentation during training
@@ -91,8 +91,8 @@ The training process can be configured using a JSON configuration file. Here's t
     "masked_video_dir": "dataset/processed/videos/masks",
     "temp_dir": "./temp_frames"
   },
-  "cross_validation": {
-    "k_folds": 5,
+  "split": {
+    "train_ratio": 0.75,
     "random_seed": 42
   },
   "training": {
@@ -114,9 +114,9 @@ The training process can be configured using a JSON configuration file. Here's t
 - `masked_video_dir`: Path to directory containing masked/annotated videos
 - `temp_dir`: Temporary directory for storing extracted frames
 
-#### Cross-Validation Parameters
-- `k_folds`: Number of folds for k-fold cross-validation (default: 5)
-- `random_seed`: Random seed for reproducible splits (default: 42)
+#### Split Parameters
+- `train_ratio`: Ratio of subjects to use for training (default: 0.75)
+- `random_seed`: Random seed for reproducible subject splits (default: 42)
 
 #### Training Parameters
 - `epochs`: Number of training epochs (default: 1)
@@ -180,7 +180,7 @@ python main.py --config path/to/your/config.json
 python main.py \
     --raw_video_dir "dataset/raw/" \
     --masked_video_dir "dataset/processed/videos/masks" \
-    --k_folds 5 \
+    --train_ratio 0.75 \
     --epochs 50 \
     --batch_size 16 \
     --learning_rate 0.001 \
@@ -203,23 +203,23 @@ python main.py \
 
 The training process follows these steps:
 
-1. **Data Loading**: Extracts frames from paired video files
-2. **Cross-Validation Setup**: Creates k-fold splits with the specified random seed
-3. **Model Training**: For each fold:
-   - Creates a fresh U-Net model with ResNet34 encoder
-   - Trains for the specified number of epochs
-   - Tracks training and validation losses
-   - Saves the best model for this fold
-4. **Model Selection**: Selects the best model across all folds
-5. **Results Summary**: Provides detailed cross-validation statistics
+1. **Data Loading**: Extracts frames from paired video files and organizes by subject
+2. **Subject Split**: Splits subjects into training (75%) and validation (25%) sets
+3. **Model Training**: 
+   - Creates a U-Net model with ResNet34 encoder
+   - Trains on training subjects for the specified number of epochs
+   - Validates on validation subjects after each epoch
+   - Saves the best model based on validation loss
+4. **Results Summary**: Provides detailed training statistics and subject information
 
 ### Output
 
 The training process will output:
 
+- **Subject Information**: Which subjects are used for training vs validation
 - **Real-time Progress**: Training and validation losses for each epoch
-- **Per-fold Results**: Best validation loss for each fold
-- **Final Summary**: Mean, standard deviation, and range of validation losses
+- **Best Model Tracking**: Automatic saving of the best model based on validation loss
+- **Final Summary**: Training statistics including final losses and subject breakdown
 - **Saved Model**: Best model checkpoint saved to the specified path
 
 ### Example Output
@@ -227,40 +227,43 @@ The training process will output:
 ```
 Using device: cuda
 Training parameters: epochs=50, batch_size=16, lr=0.001
-Cross-validation: 5-fold CV
+Validation strategy: Subject-based split (75% train, 25% validation)
 
-Starting 5-fold cross-validation...
+Subject split:
+  Train subjects (15): ['01', '04', '05', '06', '10', '17', '19', '20', '21', '23', '24', '25', '26', '27', '28']
+  Validation subjects (5): ['02', '03', '07', '08', '09']
 
-==================================================
-FOLD 1/5
-Train samples: 800, Validation samples: 200
-==================================================
-  Fold 1 - Epoch 1/50
-Train: 100%|██████████| 50/50 [02:15<00:00,  2.70s/it]
+============================================================
+SUBJECT-BASED TRAINING
+============================================================
+Train samples: 2400 (from 15 subjects)
+Validation samples: 800 (from 5 subjects)
+============================================================
+
+Epoch 1/50
+Train: 100%|██████████| 150/150 [02:15<00:00,  2.70s/it]
   Batch loss: 1.8234
-Val  : 100%|██████████| 13/13 [00:08<00:00,  1.58it/s]
-    Train Loss: 1.8234
-    Val   Loss: 1.6543
+Val  : 100%|██████████| 50/50 [00:08<00:00,  1.58it/s]
+  Train Loss: 1.8234
+  Val   Loss: 1.6543
+  New best model saved (val_loss: 1.6543)
+
 ...
 
-==================================================
-CROSS-VALIDATION SUMMARY
-==================================================
-Number of folds: 5
-Mean validation loss: 0.4523 ± 0.0234
+============================================================
+TRAINING SUMMARY
+============================================================
+Training subjects: ['01', '04', '05', '06', '10', '17', '19', '20', '21', '23', '24', '25', '26', '27', '28'] (15 subjects)
+Validation subjects: ['02', '03', '07', '08', '09'] (5 subjects)
+Training samples: 2400
+Validation samples: 800
+Final training loss: 0.4523
+Final validation loss: 0.4123
 Best validation loss: 0.4123
-Worst validation loss: 0.4789
-
-Per-fold results:
-  Fold 1: 0.4123 (train: 800, val: 200)
-  Fold 2: 0.4456 (train: 800, val: 200)
-  Fold 3: 0.4678 (train: 800, val: 200)
-  Fold 4: 0.4234 (train: 800, val: 200)
-  Fold 5: 0.4789 (train: 800, val: 200)
 
 Saved best model (val_loss: 0.4123) to ./best_unet.pth
 
-Cross-validation complete!
+Training complete!
 ```
 
 ## Model Architecture
