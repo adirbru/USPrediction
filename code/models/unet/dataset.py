@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from pathlib import Path
 import logging
 import re
+import shutil
 
 from utils.video_utils import RawVideo, MaskedVideo
 
@@ -16,6 +17,7 @@ class DatasetVideo:
         self.masked = MaskedVideo(path=masked_video)
         self.output_dir = output_dir / raw_video.stem
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.name = raw_video.stem
 
     def split_to_frames(self):
         raw_folder = self.output_dir / "raw"
@@ -26,11 +28,14 @@ class DatasetVideo:
         self.raw.split_to_frames(raw_folder)
         try:
             self.masked.split_to_frames(masked_folder)
+            if len(self.raw.frames) != len(self.masked.frames):
+                raise ValueError(f"Frame count mismatch in {self.name}, skipping...")
+
         except Exception as e:
             logging.error(f"Error processing masked video {self.masked.path}: {e}")
             logging.error("removing created frames.")
             # Cleaning up
-            os.rmdir(self.output_dir)
+            shutil.rmtree(self.output_dir, ignore_errors=True)
             self.raw.frames.clear()
             self.masked.frames.clear()
 
