@@ -6,21 +6,10 @@ import torch
 from dataclasses import dataclass, field
 from typing import Union, Tuple, List, Dict
 
+from utils.image_utils import quantize_matrix, COLOR_PALETTE
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# TODO: Change the color palette to use k-means clustering to find distinct colors
-COLOR_PALETTE = [
-    (0, 0, 0),      # Black (for background)
-    (0, 255, 0),    # Green
-    (255, 0, 0),    # Blue
-    (0, 0, 255),    # Red
-    (255, 255, 0),  # Cyan
-    (255, 0, 255),  # Magenta
-    (0, 255, 255),  # Yellow
-    (128, 0, 128),  # Purple
-    (255, 165, 0),  # Orange
-]
 
 @dataclass
 class Video:
@@ -67,18 +56,16 @@ class MaskedVideo(Video):
     def __init__(self, path: Path):
         super().__init__(path=path)
 
-    def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
+    def get_frame_matrix(self, frame_index: int, color_palette: np.ndarray = COLOR_PALETTE) -> torch.Tensor:
         mask = cv2.imread(self.frames[frame_index], cv2.IMREAD_COLOR)
         if mask is None:
             raise ValueError(f"Could not load mask: {self.frames[frame_index]}")
 
-        # Convert mask from RGB to class indices
-        h, w, _ = mask.shape
-        label = np.zeros((h, w), dtype=np.int64)
-        for idx_cls, rgb in enumerate(COLOR_PALETTE):
-            matches = np.all(mask == rgb, axis=-1)
-            label[matches] = idx_cls
-        return torch.tensor(label)
+        # Quantize mask colors to the known palette then convert to integer class indices
+        colored = quantize_matrix(mask, color_palette)
+        
+        # Return long tensor of shape (H, W) for CrossEntropyLoss
+        return torch.tensor(colored, dtype=torch.long)
 
 
 def get_sorted_frames(folder: Union[str, Path], extension: str = ".png") -> List[Path]:
@@ -239,3 +226,4 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
     except Exception:
         logging.exception("Error creating video")
         return False
+    

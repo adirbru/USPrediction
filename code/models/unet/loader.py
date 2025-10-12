@@ -8,7 +8,8 @@ def get_model():
     model = smp.Unet(encoder_name="resnet34", 
                      encoder_weights="imagenet",        # Pre-trained on ImageNet
                      in_channels=1,                     # US image is grayscale
-                     classes=7,                         # 7 muscle groups for segmentation    
+                     out_channels=3,                    # 3 output channels for RGB mask
+                     classes=8,                         # 7 muscle groups for segmentation + background
                      activation=None)
     return model
 
