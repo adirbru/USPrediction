@@ -103,11 +103,6 @@ The training process can be configured using a JSON configuration file. Here's t
   },
   "model": {
     "checkpoint_path": "./best_unet.pth"
-  },
-  "augmentation": {
-    "resize_height": 256,
-    "resize_width": 256,
-    "horizontal_flip_prob": 0.5
   }
 }
 ```
@@ -131,11 +126,6 @@ The training process can be configured using a JSON configuration file. Here's t
 
 #### Model Parameters
 - `checkpoint_path`: Path to save the best model checkpoint
-
-#### Augmentation Parameters
-- `resize_height`: Height for image resizing (default: 256)
-- `resize_width`: Width for image resizing (default: 256)
-- `horizontal_flip_prob`: Probability of horizontal flip (default: 0.5)
 
 ## Data Preparation
 

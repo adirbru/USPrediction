@@ -99,10 +99,7 @@ class USSegmentationDataset(Dataset):
         video_index, frame_index = get_video_and_frame(index)
         video = self.videos[video_index]
         
-        print(f"Loading frame {frame_index} from video {video_index}")
         img_matrix = video.raw.get_frame_matrix(frame_index)
-        print(f"  Loaded raw frame: {img_matrix.shape}")
         mask_matrix = video.masked.get_frame_matrix(frame_index)
-        print(f"  Loaded mask frame: {mask_matrix.shape}")
         
         return img_matrix, mask_matrix

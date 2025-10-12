@@ -16,10 +16,5 @@
   },
   "model": {
     "checkpoint_path": "./best_unet.pth"
-  },
-  "augmentation": {
-    "resize_height": 256,
-    "resize_width": 256,
-    "horizontal_flip_prob": 0.5
   }
 }

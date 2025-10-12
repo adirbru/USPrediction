@@ -55,14 +55,6 @@ def parse_args():
     parser.add_argument('--checkpoint_path', type=str,
                         help='Path to save the best model checkpoint')
     
-    # Data augmentation
-    parser.add_argument('--resize_height', type=int,
-                        help='Height for image resizing')
-    parser.add_argument('--resize_width', type=int,
-                        help='Width for image resizing')
-    parser.add_argument('--horizontal_flip_prob', type=float,
-                        help='Probability of horizontal flip during training')
-    
     args = parser.parse_args()
     
     # If config file is provided, load it and override args
