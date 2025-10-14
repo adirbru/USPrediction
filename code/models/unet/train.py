@@ -7,16 +7,23 @@ from torch.utils.data import DataLoader, Subset
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 from loader import get_model
 from dataset import USSegmentationDataset
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
     for imgs, masks in tqdm(loader, desc="Train"):
-        imgs  = imgs.to(device)
+        # The DataLoader output for images is (N, C, H, W) if RawVideo.get_frame_matrix returns (C, H, W).
+        # Assuming RawVideo returns (1, H, W), the DataLoader output is (N, 1, H, W).
+        # We REMOVE the redundant .unsqueeze(1) call.
+        imgs  = imgs.to(device) 
         masks = masks.to(device)
 
         optimizer.zero_grad()
@@ -27,7 +34,7 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
         optimizer.step()
 
         running_loss += loss.item() * imgs.size(0)
-        logging.info(f"  Batch loss: {loss.item():.4f}")
+        # logging.info(f"  Batch loss: {loss.item():.4f}") # Disabled to prevent excessive logging
 
     return running_loss / len(loader.dataset)
 
@@ -37,6 +44,9 @@ def validate(model, loader, criterion, device):
     val_loss = 0.0
     with torch.no_grad():
         for imgs, masks in tqdm(loader, desc="Val  "):
+            # The DataLoader output for images is (N, C, H, W) if RawVideo.get_frame_matrix returns (C, H, W).
+            # Assuming RawVideo returns (1, H, W), the DataLoader output is (N, 1, H, W).
+            # We REMOVE the redundant .unsqueeze(1) call.
             imgs  = imgs.to(device)
             masks = masks.to(device)
 
@@ -48,110 +58,135 @@ def validate(model, loader, criterion, device):
 
 class UNetTrainer:
     """U-Net trainer with subject-based train/validation split"""
-    
     def __init__(self, args):
         self.args = args
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.best_val_loss = float("inf")
-        self.best_model = None
-        
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         logging.info(f"Using device: {self.device}")
-        logging.info(f"Training parameters: epochs={args.epochs}, batch_size={args.batch_size}, lr={args.learning_rate}")
-    
-    def create_dataset(self):
-        """Create the full dataset from video files"""
-        dataset = USSegmentationDataset(
+        
+        # --- Data Setup ---
+        self.dataset = USSegmentationDataset(
             raw_video_dir=self.args.raw_video_dir,
             masked_video_dir=self.args.masked_video_dir,
-            temp_dir=self.args.temp_dir,
+            temp_dir=self.args.temp_dir
         )
-        return dataset
+        self.train_subjects, self.val_subjects = self._split_subjects()
+        self.train_loader, self.val_loader = self._setup_loaders()
+        
+        # --- Model and Weights Setup ---
+        self.model = get_model().to(self.device)
+        
+        # --- NEW: Calculate and assign class weights ---
+        self.class_weights = self._calculate_class_weights()
+        
+        self.criterion = nn.CrossEntropyLoss(weight=self.class_weights.to(self.device))
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+        
+        self.best_val_loss = float('inf')
+        self.best_model = None
+        self.training_results = {}
 
-    def setup_subject_split(self, dataset):
-        """Setup subject-based train/validation split"""
-        subject_ids = dataset.get_subject_ids()
+    def _calculate_class_weights(self):
+        """
+        Calculate class weights for CrossEntropyLoss to address class imbalance.
+        Since Black (index 0) is the background and dominant, we give it a lower weight.
+        """
+        # Define a base weight array: 8 classes (0 to 7)
+        weights = np.ones(8, dtype=np.float32)
+        
+        # Class 0 (Black - Background) is typically dominant and should be penalized less
+        # We can set its weight significantly lower than 1.0
+        weights[0] = 0.1 # Example: 10% of the normal weight
+        
+        # Other classes (1-7, your target segments) keep higher weight
+        weights[1:] = 1.0 # Standard weight for foreground classes
+        
+        logging.info(f"Using class weights: {weights}")
+        return torch.from_numpy(weights)
 
-        # Use args.train_ratio for training, 1 - args.train_ratio for validation
+
+    def _split_subjects(self):
+        """Splits the dataset's subject IDs into train and validation sets."""
+        all_subjects = self.dataset.get_subject_ids()
+        
+        # Ensure subject IDs are used for splitting to maintain independence
         train_subjects, val_subjects = train_test_split(
-            subject_ids, 
-            test_size=1 - self.args.train_ratio, 
-            random_state=self.args.random_seed,
-            shuffle=True
+            all_subjects, 
+            train_size=self.args.train_ratio, 
+            random_state=self.args.random_seed
+        )
+        return train_subjects, val_subjects
+
+    def _setup_loaders(self):
+        """Creates DataLoader objects for training and validation."""
+        
+        # Get all frame indices corresponding to the selected subjects
+        train_indices = self.dataset.get_video_indices_for_subjects(self.train_subjects)
+        val_indices = self.dataset.get_video_indices_for_subjects(self.val_subjects)
+        
+        # Create subsets based on indices
+        train_subset = Subset(self.dataset, train_indices)
+        val_subset = Subset(self.dataset, val_indices)
+        
+        train_loader = DataLoader(
+            train_subset,
+            batch_size=self.args.batch_size,
+            shuffle=True,
+            num_workers=self.args.num_workers
+        )
+        val_loader = DataLoader(
+            val_subset,
+            batch_size=self.args.batch_size,
+            shuffle=False, # No need to shuffle validation data
+            num_workers=self.args.num_workers
         )
         
-        logging.info("Subject split:")
-        logging.info(f"  Train subjects ({len(train_subjects)}): {sorted(train_subjects)}")
-        logging.info(f"  Validation subjects ({len(val_subjects)}): {sorted(val_subjects)}")
-        
-        # Get frame indices for each split
-        train_indices = dataset.get_video_indices_for_subjects(train_subjects)
-        val_indices = dataset.get_video_indices_for_subjects(val_subjects)
-        
-        return train_indices, val_indices, train_subjects, val_subjects
-    
-    def train_model(self, model, train_loader, val_loader, criterion, optimizer, epochs):
-        """Train model with subject-based validation"""
+        logging.info(f"Train samples: {len(train_subset)}, Val samples: {len(val_subset)}")
+        return train_loader, val_loader
+
+    def run(self):
+        """Runs the main training loop."""
         train_losses = []
         val_losses = []
         
-        for epoch in range(1, epochs + 1):
-            logging.info(f"Epoch {epoch}/{epochs}")
-            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, self.device)
-            val_loss = validate(model, val_loader, criterion, self.device)
+        logging.info(f"\n{'='*60}\nStarting Training for {self.args.epochs} Epochs\n{'='*60}")
+        
+        for epoch in range(self.args.epochs):
+            logging.info(f"\n--- Epoch {epoch+1}/{self.args.epochs} ---")
             
+            # Training phase
+            train_loss = train_one_epoch(
+                self.model, self.train_loader, self.criterion, self.optimizer, self.device
+            )
             train_losses.append(train_loss)
+            logging.info(f"Epoch {epoch+1} Train Loss: {train_loss:.4f}")
+
+            # Validation phase
+            val_loss = validate(
+                self.model, self.val_loader, self.criterion, self.device
+            )
             val_losses.append(val_loss)
+            logging.info(f"Epoch {epoch+1} Validation Loss: {val_loss:.4f}")
             
-            logging.info(f"  Train Loss: {train_loss:.4f}")
-            logging.info(f"  Val   Loss: {val_loss:.4f}")
-            
-            # Save best model
+            # Check for best model
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
-                self.best_model = model.state_dict().copy()
-                logging.info(f"  New best model saved (val_loss: {val_loss:.4f})")
+                self.best_model = self.model.state_dict()
+                logging.info(f"New best model saved.")
         
-        return train_losses, val_losses
-    
-    def run_training(self, dataset: USSegmentationDataset):
-        """Run the complete subject-based training process"""
-        # Setup subject-based split
-        train_indices, val_indices, train_subjects, val_subjects = self.setup_subject_split(dataset)
+        self._record_results(train_losses, val_losses)
+        self.save_best_model()
+        self.print_summary()
         
-        logging.info(f"\n{'='*60}")
-        logging.info("SUBJECT-BASED TRAINING")
-        logging.info(f"{'='*60}")
-        logging.info(f"Train samples: {len(train_indices)} (from {len(train_subjects)} subjects)")
-        logging.info(f"Validation samples: {len(val_indices)} (from {len(val_subjects)} subjects)")
-        logging.info(f"{'='*60}")
-        
-        # Create subsets
-        train_subset = Subset(dataset, train_indices)
-        val_subset = Subset(dataset, val_indices)
-
-        # Create data loaders
-        train_loader = DataLoader(train_subset, batch_size=self.args.batch_size, shuffle=True, num_workers=self.args.num_workers)
-        val_loader = DataLoader(val_subset, batch_size=self.args.batch_size, shuffle=False, num_workers=self.args.num_workers)
-        
-        # Create model
-        model = get_model().to(self.device)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
-        
-        # Train model
-        train_losses, val_losses = self.train_model(
-            model, train_loader, val_loader, criterion, optimizer, self.args.epochs
-        )
-        
-        # Store results
+    def _record_results(self, train_losses, val_losses):
+        """Record final results and training history"""
         self.training_results = {
-            'train_subjects': train_subjects,
-            'val_subjects': val_subjects,
-            'train_size': len(train_indices),
-            'val_size': len(val_indices),
-            'final_train_loss': train_losses[-1],
-            'final_val_loss': val_losses[-1],
+            'train_subjects': self.train_subjects,
+            'val_subjects': self.val_subjects,
+            'train_size': len(self.train_loader.dataset),
+            'val_size': len(self.val_loader.dataset),
             'best_val_loss': self.best_val_loss,
+            'final_train_loss': train_losses[-1] if train_losses else float('nan'),
+            'final_val_loss': val_losses[-1] if val_losses else self.best_val_loss,
             'train_losses': train_losses,
             'val_losses': val_losses
         }
@@ -179,10 +214,3 @@ class UNetTrainer:
         logging.info(f"Best validation loss: {results['best_val_loss']:.4f}")
         
         logging.info("\nTraining complete!")
-    
-    def run(self):
-        """Main training pipeline"""
-        dataset = self.create_dataset()
-        self.run_training(dataset)
-        self.save_best_model()
-        self.print_summary()
