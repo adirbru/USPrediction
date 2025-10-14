@@ -35,9 +35,6 @@ def quantize_matrix(mask: np.ndarray, color_palette: np.ndarray = COLOR_PALETTE)
     # This is the key change: we find the index directly.
     closest_color_indices = np.argmin(squared_distances, axis=1)
     
-    # 4. Reshape the indices back to the original image dimensions (H, W)
-    h, w, _ = mask.shape
-    labels_matrix = closest_color_indices.reshape(h, w)
-    
-    # 5. Return as a long tensor of shape (H, W) for CrossEntropyLoss
-    return labels_matrix
+    # 4. Reshape back to (H, W)
+    H, W, _ = mask.shape
+    return closest_color_indices.reshape(H, W)

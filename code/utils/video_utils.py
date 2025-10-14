@@ -227,3 +227,27 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         logging.exception("Error creating video")
         return False
     
+
+def index_matrix_to_rgb(index_matrix: torch.Tensor, color_palette: np.ndarray = COLOR_PALETTE) -> np.ndarray:
+    """
+    Converts a Tensor of predicted class indices (H, W) back into an RGB image matrix (H, W, 3) 
+    using the defined COLOR_PALETTE.
+    
+    Args:
+        index_matrix: PyTorch Tensor of shape (H, W) containing class indices (0-7).
+        color_palette: Numpy array (8, 3) of RGB colors.
+        
+    Returns:
+        np.ndarray: RGB image matrix of shape (H, W, 3) of type np.uint8.
+    """
+    # Ensure index_matrix is on CPU and convert to NumPy
+    if isinstance(index_matrix, torch.Tensor):
+        index_matrix = index_matrix.cpu().numpy()
+
+    # Ensure indices are integers (0-7)
+    indices = index_matrix.astype(int)
+
+    # Use the indices to look up the corresponding colors in the palette
+    rgb_mask = color_palette[indices]
+    
+    return rgb_mask.astype(np.uint8)
