@@ -19,22 +19,32 @@ def quantize_matrix(mask: np.ndarray, color_palette: np.ndarray = COLOR_PALETTE)
     returns a Tensor of shape (H, W) where each pixel value is the 
     index (class label) of the closest color in the palette.
     """
-    # Ensure mask is processed as an (H*W, 3) array of pixels
-    pixels = mask.reshape(-1, 3)
-    
-    # 2. Calculate squared Euclidean distance from every pixel to every palette color
-    # The quantization logic is here, but we will return the index instead of the color itself.
-    
-    # Use int32 for difference calculation to avoid overflow when squaring large numbers
-    diff = pixels[:, np.newaxis, :].astype(np.int32) - color_palette[np.newaxis, :, :].astype(np.int32)
-    
-    # Sum of squared differences for each pixel-color pair: (N, len(palette))
-    squared_distances = np.sum(diff**2, axis=2)
-    
-    # 3. Find the index (class label) of the closest color for each pixel
-    # This is the key change: we find the index directly.
-    closest_color_indices = np.argmin(squared_distances, axis=1)
-    
-    # 4. Reshape back to (H, W)
+    mask = np.asarray(mask)
+
+    # If grayscale (H, W) or (H, W, 1), convert to 3-channel for distance calc.
+    if mask.ndim == 2:
+        mask = np.stack([mask, mask, mask], axis=-1)
+    elif mask.ndim == 3 and mask.shape[2] == 1:
+        mask = np.concatenate([mask, mask, mask], axis=2)
+
+    if mask.ndim != 3 or mask.shape[2] != 3:
+        raise ValueError("mask must be HxW or HxWx1 or HxWx3")
+
+    # Normalize floats in [0,1] to 0-255
+    if np.issubdtype(mask.dtype, np.floating):
+        mask = np.clip(mask * 255.0, 0, 255).astype(np.uint8)
+    else:
+        mask = mask.astype(np.uint8)
+
     H, W, _ = mask.shape
-    return closest_color_indices.reshape(H, W)
+    pixels = mask.reshape(-1, 3).astype(np.int32)              # (N,3)
+    palette = np.asarray(color_palette, dtype=np.int32)        # (P,3)
+
+    # Compute squared distances (N, P) and argmin -> index for each pixel
+    diff = pixels[:, None, :] - palette[None, :, :]            # (N, P, 3)
+    d2 = np.sum(diff * diff, axis=2)                           # (N, P)
+    idx = np.argmin(d2, axis=1)                                # (N,)
+
+    # Lookup palette colors and reshape back to (H, W, 3)
+    rgb = palette[idx].astype(np.uint8).reshape(H, W, 3)
+    return rgb

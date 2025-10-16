@@ -15,9 +15,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class Video:
     path: Path
     frames: list[Path] = field(default_factory=list)
+    name: str = field(init=False)
 
-    def split_to_frames(self, output_dir: Path):
-        """Extract frames from video and save to output_dir with given prefix"""
+    def split_to_frames(self, output_dir: Path, single_frame_augs: list = None):
+        """Extract frames from video and save to output_dir with given prefix.
+
+        Optional: a caller may pass single-frame augmentations via the
+        `single_frame_augs` attribute on this Video instance before calling this
+        method, but the preferred way is to pass the list when invoking.
+        """
         cap = cv2.VideoCapture(str(self.path))
         if not cap.isOpened():
             raise ValueError(f"Could not open video file: {self.path}")
@@ -28,8 +34,30 @@ class Video:
             if not ret:
                 logging.info(f"Finished extracting {frame_index} frames from {self.path}")
                 break
+
+            frame_to_save = frame
+            if single_frame_augs:
+                for aug in single_frame_augs:
+                    frame_to_save = aug.apply(frame_to_save)
+
+            # If augmentation returned an index matrix (H, W), map to colors for saving
+            if isinstance(frame_to_save, np.ndarray) and frame_to_save.ndim == 2:
+                try:
+                    colored = COLOR_PALETTE[frame_to_save]
+                    frame_to_save = colored.astype(np.uint8)
+                except Exception:
+                    # Fall back to saving the raw array if mapping failed
+                    logging.exception("Failed to map index mask to COLOR_PALETTE; saving raw array")
+
+            # Ensure uint8 for saving
+            if isinstance(frame_to_save, np.ndarray) and frame_to_save.dtype != np.uint8:
+                if np.issubdtype(frame_to_save.dtype, np.floating):
+                    frame_to_save = np.clip(frame_to_save * 255.0, 0, 255).astype(np.uint8)
+                else:
+                    frame_to_save = frame_to_save.astype(np.uint8)
+
             frame_path = output_dir / f"frame_{frame_index:06d}.png"
-            cv2.imwrite(str(frame_path), frame)
+            cv2.imwrite(str(frame_path), frame_to_save)
             frame_index += 1
             self.frames.append(frame_path)
         cap.release()
@@ -38,8 +66,7 @@ class Video:
         return self.frames[index]
 
 class RawVideo(Video):
-    def __init__(self, path: Path):
-        super().__init__(path=path)
+    name = "raw"
 
     def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
         # Load grayscale image
@@ -53,19 +80,15 @@ class RawVideo(Video):
     
 
 class MaskedVideo(Video):
-    def __init__(self, path: Path):
-        super().__init__(path=path)
-
+    name = "masked"
+    
     def get_frame_matrix(self, frame_index: int, color_palette: np.ndarray = COLOR_PALETTE) -> torch.Tensor:
         mask = cv2.imread(self.frames[frame_index], cv2.IMREAD_COLOR)
         if mask is None:
             raise ValueError(f"Could not load mask: {self.frames[frame_index]}")
-
-        # Quantize mask colors to the known palette then convert to integer class indices
-        colored = quantize_matrix(mask, color_palette)
-        
-        # Return long tensor of shape (H, W) for CrossEntropyLoss
-        return torch.tensor(colored, dtype=torch.long)
+        # Convert colored mask to class index matrix (H, W) using palette
+        indices = quantize_matrix(mask, color_palette)
+        return torch.tensor(indices, dtype=torch.long)
 
 
 def get_sorted_frames(folder: Union[str, Path], extension: str = ".png") -> List[Path]:

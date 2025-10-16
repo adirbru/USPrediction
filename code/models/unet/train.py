@@ -67,7 +67,11 @@ class UNetTrainer:
         self.dataset = USSegmentationDataset(
             raw_video_dir=self.args.raw_video_dir,
             masked_video_dir=self.args.masked_video_dir,
-            temp_dir=self.args.temp_dir
+            temp_dir=self.args.temp_dir,
+            preprocess=self.args.preprocess,
+            in_place_augmentations=self.args.in_place_augmentations,
+            enrichment_augmentations=self.args.enrichment_augmentations,
+            augmentation_params=vars(self.args)
         )
         self.train_subjects, self.val_subjects = self._split_subjects()
         self.train_loader, self.val_loader = self._setup_loaders()
