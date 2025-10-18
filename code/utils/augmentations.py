@@ -32,7 +32,10 @@ class ResizeAugmentation(Augmentation):
         self.size = size
 
     def apply(self, img: np.ndarray) -> np.ndarray:
-        return cv2.resize(img, self.size, interpolation=cv2.INTER_AREA)
+        dtype = img.dtype
+        img = img.astype(np.float32)
+        resized = cv2.resize(img, self.size, interpolation=cv2.INTER_AREA)
+        return resized.astype(dtype)
 
 
 class FlipHorizontalAugmentation(PairAugmentation):

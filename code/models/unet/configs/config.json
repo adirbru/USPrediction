@@ -1,15 +1,22 @@
 {
   "data": {
-    "raw_video_dir": "dataset/raw_test/",
-    "masked_video_dir": "dataset/processed/videos/masks",
+    "raw_video_dir": "dataset/raw/",
+    "masked_video_dir": "dataset/masks/",
     "temp_dir": "./temp_frames"
+  },
+"augmentations":
+  {
+    "in_place_augmentations": ["quantize", "resize"],
+    "enrichment_augmentations": ["random_resize_crop", "flip"],
+    "random_resize_crop_percent": 20,
+    "resize_to": [240, 240]
   },
   "split": {
     "train_ratio": 0.9,
     "random_seed": 42
   },
   "training": {
-    "epochs": 1,
+    "epochs": 10,
     "batch_size": 8,
     "learning_rate": 0.0001,
     "num_workers": 8

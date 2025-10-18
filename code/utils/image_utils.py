@@ -4,11 +4,11 @@ import numpy as np
 COLOR_PALETTE = np.array([
     (0, 0, 0),      # Black
     (0, 128, 0),    # Green
-    (128, 0, 0),    # Red
     (0, 0, 128),    # Blue
-    (128, 128, 0),  # Olive/Khaki
-    (128, 0, 128),  # Purple
+    (128, 0, 0),    # Red
     (0, 128, 128),  # Teal
+    (128, 0, 128),  # Purple
+    (128, 128, 0),  # Yellow
     (128, 128, 128) # Gray
 ])
 
@@ -45,6 +45,5 @@ def quantize_matrix(mask: np.ndarray, color_palette: np.ndarray = COLOR_PALETTE)
     d2 = np.sum(diff * diff, axis=2)                           # (N, P)
     idx = np.argmin(d2, axis=1)                                # (N,)
 
-    # Lookup palette colors and reshape back to (H, W, 3)
-    rgb = palette[idx].astype(np.uint8).reshape(H, W, 3)
-    return rgb
+    # Return class indices as (H, W) array
+    return idx.reshape(H, W)

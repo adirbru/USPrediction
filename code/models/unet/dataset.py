@@ -8,7 +8,7 @@ import re
 import shutil
 import numpy as np
 
-from utils.video_utils import RawVideo, MaskedVideo, get_sorted_frames
+from utils.video_utils import RawVideo, MaskedVideo, get_sorted_frames, is_video_valid
 from utils.augmentations import get_augmentation, PairAugmentation
 
 
@@ -22,6 +22,7 @@ class DatasetVideo:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.name = raw_video.stem
+        
     def split_to_frames(self, preprocess: bool = False, in_place_aug_objects: list = None):
         """Extract frames from raw/masked videos. If in_place_aug_objects provided and
         frames are freshly created, apply augmentations before saving frames to disk.
@@ -66,7 +67,8 @@ class DatasetVideo:
                 if created_folders:
                     logging.error("removing created frames.")
                     # Cleaning up
-                    shutil.rmtree(self.output_dir, ignore_errors=True)
+                    shutil.rmtree(raw_folder, ignore_errors=True)
+                    shutil.rmtree(masked_folder, ignore_errors=True)
                     self.raw.frames.clear()
                     self.masked.frames.clear()
 
@@ -126,10 +128,19 @@ class USSegmentationDataset(Dataset):
         for video_name in os.listdir(raw_video_dir):
             try:
                 raw_video_path = Path(raw_video_dir) / video_name
-                masked_video_path = Path(masked_video_dir) / video_name
+                masked_video_path = Path(masked_video_dir) / f"{Path(video_name).stem}_mask{Path(video_name).suffix}"
 
                 if not raw_video_path.exists() or not masked_video_path.exists():
                     logging.warning(f"Video pair not found for {video_name}, skipping...")
+                    continue
+
+                # Check if video files are valid before processing
+                if not is_video_valid(raw_video_path):
+                    logging.warning(f"Raw video file is corrupted or invalid: {video_name}, skipping...")
+                    continue
+                    
+                if not is_video_valid(masked_video_path):
+                    logging.warning(f"Masked video file is corrupted or invalid: {masked_video_path.name}, skipping...")
                     continue
 
                 dataset_video = DatasetVideo(raw_video=raw_video_path,
@@ -154,8 +165,13 @@ class USSegmentationDataset(Dataset):
                 if self.enrichment_augmentations:
                     self._apply_enrichment_augmentations(dataset_video, subject_id, raw_video_path)
 
-            except Exception:
-                logging.exception(f"Error processing video {video_name}, skipping...")
+            except ValueError as e:
+                if "Could not open video file" in str(e):
+                    logging.error(f"Skipping corrupted video file {video_name}: {e}")
+                else:
+                    logging.error(f"Error processing video {video_name}: {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error processing video {video_name}: {e}")
     
     def _apply_enrichment_augmentations(self, dataset_video: DatasetVideo, subject_id: str, raw_video_path: Path):
 
@@ -233,10 +249,10 @@ class USSegmentationDataset(Dataset):
                 augmented_video.name = f"{dataset_video.name}{aug.suffix}"
 
                 # Add to dataset
-                last_frame = max([rng.stop for rng in self.subject_to_frames.values()], default=0)
                 # Extend the subject's frame range to include augmented frames
                 original_range = self.subject_to_frames[subject_id]
-                self.subject_to_frames[subject_id] = range(original_range.start, last_frame + len(augmented_video))
+                new_end = original_range.stop + len(augmented_video)
+                self.subject_to_frames[subject_id] = range(original_range.start, new_end)
                 self.videos.append(augmented_video)
 
             except Exception as e:

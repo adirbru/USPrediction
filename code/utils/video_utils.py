@@ -251,6 +251,29 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         return False
     
 
+def is_video_valid(video_path: Union[str, Path]) -> bool:
+    """
+    Check if a video file is valid and can be opened.
+    
+    Args:
+        video_path: Path to the video file to check
+        
+    Returns:
+        bool: True if video is valid, False otherwise
+    """
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            return False
+        
+        # Try to read one frame to ensure the video is not corrupted
+        ret, _ = cap.read()
+        cap.release()
+        return ret
+    except Exception:
+        return False
+
+
 def index_matrix_to_rgb(index_matrix: torch.Tensor, color_palette: np.ndarray = COLOR_PALETTE) -> np.ndarray:
     """
     Converts a Tensor of predicted class indices (H, W) back into an RGB image matrix (H, W, 3) 
