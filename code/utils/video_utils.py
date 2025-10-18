@@ -2,23 +2,94 @@ import cv2
 import numpy as np
 from pathlib import Path
 import logging
+import torch
+from dataclasses import dataclass, field
 from typing import Union, Tuple, List, Dict
+
+from utils.image_utils import quantize_matrix, COLOR_PALETTE
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Define a palette of distinct BGR colors for mapping grayscale values
-COLOR_PALETTE = [
-    (0, 0, 0),      # Black (for background)
-    (0, 255, 0),    # Green
-    (255, 0, 0),    # Blue
-    (0, 0, 255),    # Red
-    (255, 255, 0),  # Cyan
-    (255, 0, 255),  # Magenta
-    (0, 255, 255),  # Yellow
-    (128, 0, 128),  # Purple
-    (255, 165, 0),  # Orange
-]
+@dataclass
+class Video:
+    path: Path
+    frames: list[Path] = field(default_factory=list)
+    name: str = field(init=False)
+
+    def split_to_frames(self, output_dir: Path, single_frame_augs: list = None):
+        """Extract frames from video and save to output_dir with given prefix.
+
+        Optional: a caller may pass single-frame augmentations via the
+        `single_frame_augs` attribute on this Video instance before calling this
+        method, but the preferred way is to pass the list when invoking.
+        """
+        cap = cv2.VideoCapture(str(self.path))
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {self.path}")
+
+        frame_index = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                logging.info(f"Finished extracting {frame_index} frames from {self.path}")
+                break
+
+            frame_to_save = frame
+            if single_frame_augs:
+                for aug in single_frame_augs:
+                    frame_to_save = aug.apply(frame_to_save)
+
+            # If augmentation returned an index matrix (H, W), map to colors for saving
+            if isinstance(frame_to_save, np.ndarray) and frame_to_save.ndim == 2:
+                try:
+                    colored = COLOR_PALETTE[frame_to_save]
+                    frame_to_save = colored.astype(np.uint8)
+                except Exception:
+                    # Fall back to saving the raw array if mapping failed
+                    logging.exception("Failed to map index mask to COLOR_PALETTE; saving raw array")
+
+            # Ensure uint8 for saving
+            if isinstance(frame_to_save, np.ndarray) and frame_to_save.dtype != np.uint8:
+                if np.issubdtype(frame_to_save.dtype, np.floating):
+                    frame_to_save = np.clip(frame_to_save * 255.0, 0, 255).astype(np.uint8)
+                else:
+                    frame_to_save = frame_to_save.astype(np.uint8)
+
+            frame_path = output_dir / f"frame_{frame_index:06d}.png"
+            cv2.imwrite(str(frame_path), frame_to_save)
+            frame_index += 1
+            self.frames.append(frame_path)
+        cap.release()
+    
+    def __getitem__(self, index):
+        return self.frames[index]
+
+class RawVideo(Video):
+    name = "raw"
+
+    def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
+        # Load grayscale image
+        img = cv2.imread(self.frames[frame_index], cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            raise ValueError(f"Could not load image: {self.frames[frame_index]}")
+        # Normalize & add channel dim
+        img = img.astype(np.float32) / 255.0
+        img = np.expand_dims(img, 0)  # (1, H, W)
+        return torch.tensor(img)
+    
+
+class MaskedVideo(Video):
+    name = "masked"
+    
+    def get_frame_matrix(self, frame_index: int, color_palette: np.ndarray = COLOR_PALETTE) -> torch.Tensor:
+        mask = cv2.imread(self.frames[frame_index], cv2.IMREAD_COLOR)
+        if mask is None:
+            raise ValueError(f"Could not load mask: {self.frames[frame_index]}")
+        # Convert colored mask to class index matrix (H, W) using palette
+        indices = quantize_matrix(mask, color_palette)
+        return torch.tensor(indices, dtype=torch.long)
+
 
 def get_sorted_frames(folder: Union[str, Path], extension: str = ".png") -> List[Path]:
     folder = Path(folder)
@@ -160,7 +231,7 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         
         height, width, _ = first_frame.shape
         
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter.fourcc(*'mp4v')
         video_writer = cv2.VideoWriter(str(output_video), fourcc, fps, (width, height))
         
         # Write each frame to video
@@ -175,14 +246,54 @@ def create_video_from_frames(input_folder: Union[str, Path], fps: int = 10,
         logging.info(f"Video successfully created at {output_video}")
         return True
     
-    except Exception as e:
-        logging.exception(f"Error creating video")
+    except Exception:
+        logging.exception("Error creating video")
+        return False
+    
+
+def is_video_valid(video_path: Union[str, Path]) -> bool:
+    """
+    Check if a video file is valid and can be opened.
+    
+    Args:
+        video_path: Path to the video file to check
+        
+    Returns:
+        bool: True if video is valid, False otherwise
+    """
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            return False
+        
+        # Try to read one frame to ensure the video is not corrupted
+        ret, _ = cap.read()
+        cap.release()
+        return ret
+    except Exception:
         return False
 
-if __name__ == "__main__":
-    raw_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/code/dataset/processed/frames/recordings_01_enrollment01_multi_playing01"
-    seg_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/xmem_output/recordings_01_enrollment01_multi_playing01/masks"
-    output_folder = "/Users/adirbruchim/University/Technion/Year3/Semseter F/Projects/Vista/USPrediction/xmem_output/recordings_01_enrollment01_multi_playing01/overlays"
+
+def index_matrix_to_rgb(index_matrix: torch.Tensor, color_palette: np.ndarray = COLOR_PALETTE) -> np.ndarray:
+    """
+    Converts a Tensor of predicted class indices (H, W) back into an RGB image matrix (H, W, 3) 
+    using the defined COLOR_PALETTE.
     
-    overlay_segmentations(raw_folder, seg_folder, output_folder, opacity=0.15)
-    create_video_from_frames(output_folder, fps=20)
+    Args:
+        index_matrix: PyTorch Tensor of shape (H, W) containing class indices (0-7).
+        color_palette: Numpy array (8, 3) of RGB colors.
+        
+    Returns:
+        np.ndarray: RGB image matrix of shape (H, W, 3) of type np.uint8.
+    """
+    # Ensure index_matrix is on CPU and convert to NumPy
+    if isinstance(index_matrix, torch.Tensor):
+        index_matrix = index_matrix.cpu().numpy()
+
+    # Ensure indices are integers (0-7)
+    indices = index_matrix.astype(int)
+
+    # Use the indices to look up the corresponding colors in the palette
+    rgb_mask = color_palette[indices]
+    
+    return rgb_mask.astype(np.uint8)

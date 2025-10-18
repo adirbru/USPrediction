@@ -1,0 +1,27 @@
+[project]
+name = "USPrediction"
+description = "Train a model to predict muscle segmentation in ultrasound videos."
+authors = [
+    {name = "adirbru", email = "adir.bruchim@campus.technion.ac.il"},
+    {name = "eyalamdur", email = "eyal.amdur@campus.technion.ac.il"}
+]
+version = "0.1.0"
+requires-python = ">=3.11"
+
+dependencies = [
+    "numpy~=1.26",
+    "opencv-python~=4.10",
+    "torch~=2.4",
+    "segmentation-models-pytorch~=0.3",
+    "scikit-learn~=1.5",
+    "tqdm~=4.66",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+# search the repository root for packages
+where = ["."]
+include = ["models*", "utils*", "dataset*"]

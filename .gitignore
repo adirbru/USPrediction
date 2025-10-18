@@ -2,5 +2,12 @@
 .vscode/
 
 # ignore dataset/processed
-dataset/processed/
-code/dataset/processed/
+*.png
+*.xml
+*.npy
+code/USPrediction.egg-info/
+code/build/
+code/models/unet/_pycache/
+temp_frames/
+code/models/unet/__pycache__/*
+code/utils/__pycache__/*
