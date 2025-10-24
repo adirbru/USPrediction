@@ -6,7 +6,7 @@ import torch
 from dataclasses import dataclass, field
 from typing import Union, Tuple, List, Dict
 
-from utils.image_utils import quantize_matrix, COLOR_PALETTE
+from utils.image_utils import COLOR_PALETTE
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -81,14 +81,18 @@ class RawVideo(Video):
 
 class MaskedVideo(Video):
     name = "masked"
-    
-    def get_frame_matrix(self, frame_index: int, color_palette: np.ndarray = COLOR_PALETTE) -> torch.Tensor:
+
+    def get_frame_matrix(self, frame_index: int) -> torch.Tensor:
+        """Load mask frame as colored BGR image (H, W, 3).
+
+        Quantization to class indices should be done via QuantizeMaskAugmentation
+        in the augmentation pipeline, not here.
+        """
         mask = cv2.imread(self.frames[frame_index], cv2.IMREAD_COLOR)
         if mask is None:
             raise ValueError(f"Could not load mask: {self.frames[frame_index]}")
-        # Convert colored mask to class index matrix (H, W) using palette
-        indices = quantize_matrix(mask, color_palette)
-        return torch.tensor(indices, dtype=torch.long)
+        # Return colored mask as-is (H, W, 3) BGR format
+        return torch.tensor(mask, dtype=torch.uint8)
 
 
 def get_sorted_frames(folder: Union[str, Path], extension: str = ".png") -> List[Path]:

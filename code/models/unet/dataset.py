@@ -293,18 +293,16 @@ class USSegmentationDataset(Dataset):
             # img_matrix expected shape: (1, H, W)
             img_np = img_matrix.squeeze(0).numpy()  # (H, W)
 
-            # mask_matrix should be an index matrix (H, W) already in many cases; handle both
-            mask_np = mask_matrix.numpy()
+            # mask_matrix is now (H, W, 3) colored BGR image
+            mask_np = mask_matrix.numpy()  # (H, W, 3) uint8
 
             # Convert to uint8 for OpenCV operations (raw frames are normalized floats)
             img_np = (img_np * 255).astype(np.uint8)
 
             for aug in self.in_place_aug_objects:
                 if isinstance(aug, PairAugmentation):
-                    # For pair augmentations, we need mask as uint8 image
-                    mask_img = mask_np.astype(np.uint8)
-                    img_np, mask_img = aug.apply_pair(img_np, mask_img)
-                    mask_np = mask_img
+                    # For pair augmentations, apply to both
+                    img_np, mask_np = aug.apply_pair(img_np, mask_np)
                 else:
                     # Apply augmentation based on supported types
                     if RawVideo in aug.supported_types:
@@ -315,7 +313,14 @@ class USSegmentationDataset(Dataset):
 
             # Convert back to tensors
             img_matrix = torch.tensor(img_np.astype(np.float32) / 255.0).unsqueeze(0)  # (1, H, W)
-            mask_matrix = torch.tensor(mask_np, dtype=torch.long)
+            # mask_np should now be quantized to indices (H, W) if QuantizeMaskAugmentation was applied
+            # Otherwise it's still (H, W, 3) colored image - check dimensionality
+            if mask_np.ndim == 2:
+                # Already quantized to indices
+                mask_matrix = torch.tensor(mask_np, dtype=torch.long)
+            else:
+                # Still colored, needs quantization - this shouldn't happen if config is correct
+                raise ValueError("Mask was not quantized. Ensure 'quantize' is in in_place_augmentations.")
 
         return img_matrix, mask_matrix
     

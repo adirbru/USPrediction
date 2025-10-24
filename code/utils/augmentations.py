@@ -79,25 +79,31 @@ class RandomResizeCropAugmentation(PairAugmentation):
 
 
 class QuantizeMaskAugmentation(Augmentation):
-    """Mask-only augmentation that quantizes colors to the palette and returns colored mask (RGB/BGR)."""
+    """Mask-only augmentation that quantizes colored masks to class indices.
+
+    This is the ONLY place where quantization should happen during training.
+    MaskedVideo.get_frame_matrix() returns colored BGR images (H, W, 3),
+    and this augmentation converts them to class indices (H, W).
+    """
     def __init__(self, color_palette: np.ndarray = COLOR_PALETTE):
-        # This augmentation operates in-place on mask images and returns
-        # a class-index matrix (H, W) so dataset code can directly convert
-        # to a torch.LongTensor without re-quantizing.
         super().__init__(name='quantize_mask', in_place=True, supported_types=[MaskedVideo])
         self.color_palette = color_palette
 
     def apply(self, mask_img: np.ndarray) -> np.ndarray:
         """
-        Quantize a colored mask image to class indices and return the index matrix
+        Quantize a colored mask image to class indices.
 
         Args:
-            mask_img: Colored mask image (H, W, 3) or similar.
+            mask_img: Colored mask image (H, W, 3) in BGR format with uint8 values.
 
         Returns:
             np.ndarray: 2D array (H, W) of integer class indices (0..K-1).
         """
-        # mask_img is expected to be a BGR color image; quantize_matrix returns indices
+        # Ensure input is a colored image, not already quantized indices
+        if mask_img.ndim != 3:
+            raise ValueError(f"Expected 3D colored mask (H, W, 3), got shape {mask_img.shape}")
+
+        # quantize_matrix converts colored BGR image to class indices
         indices = quantize_matrix(mask_img, self.color_palette)
         return indices
 
