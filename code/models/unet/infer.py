@@ -67,15 +67,11 @@ def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: 
     # --- Post-processing and Saving ---
     # Convert class indices (0-7) to a color image matrix (H, W, 3)
     rgb_mask_matrix = index_matrix_to_rgb(final_mask_hw)
-    
-    # OpenCV requires BGR format for saving
-    bgr_mask_matrix = rgb_mask_matrix[:, :, ::-1]
-
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
     
     output_filepath = output_path / "predicted_mask.png"
-    cv2.imwrite(str(output_filepath), bgr_mask_matrix)
+    cv2.imwrite(str(output_filepath), rgb_mask_matrix)
     
     logging.info(f"\n--- SUCCESS ---\nPredicted color mask saved to: {output_filepath}")
 
