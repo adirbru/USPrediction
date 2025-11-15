@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 import numpy as np
+import segmentation_models_pytorch as smp
 
 from loader import get_model
 from dataset import USSegmentationDataset
@@ -188,9 +189,19 @@ class UNetTrainer:
         
         # --- NEW: Calculate and assign class weights ---
         self.class_weights = self._calculate_class_weights()
-        
-        self.criterion = nn.CrossEntropyLoss(weight=self.class_weights.to(self.device))
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+
+        self.ce_loss = nn.CrossEntropyLoss(weight=self.class_weights.to(self.device))
+        self.dice_loss = smp.losses.DiceLoss(mode='multiclass', from_logits=True)
+        self.optimizer = optim.AdamW(
+            self.model.parameters(),
+            lr=self.args.learning_rate,
+            weight_decay=1e-4
+        )
+        self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer,
+            T_max=max(1, self.args.epochs),
+            eta_min=self.args.learning_rate * 0.1
+        )
         
         self.best_val_loss = float('inf')
         self.best_model = None
@@ -213,6 +224,11 @@ class UNetTrainer:
         
         logging.info(f"Using class weights: {weights}")
         return torch.from_numpy(weights)
+
+    def _combined_loss(self, logits, targets):
+        ce = self.ce_loss(logits, targets)
+        dice = self.dice_loss(logits, targets)
+        return 0.5 * ce + 0.5 * dice
 
 
     def _split_subjects(self):
@@ -265,8 +281,8 @@ class UNetTrainer:
             logging.info(f"\n--- Epoch {epoch+1}/{self.args.epochs} ---")
 
             # Training phase
-            train_metrics = train_one_epoch(
-                self.model, self.train_loader, self.criterion, self.optimizer, self.device
+            train_loss = train_one_epoch(
+                self.model, self.train_loader, self._combined_loss, self.optimizer, self.device
             )
             train_metrics_history.append(train_metrics)
             logging.info(f"Epoch {epoch+1} Train - Loss: {train_metrics['loss']:.4f}, "
@@ -284,6 +300,16 @@ class UNetTrainer:
                         f"Precision: {val_metrics['precision']:.4f}, "
                         f"Recall: {val_metrics['recall']:.4f}")
 
+            val_loss = validate(
+                self.model, self.val_loader, self._combined_loss, self.device
+            )
+            val_losses.append(val_loss)
+            logging.info(f"Epoch {epoch+1} Validation Loss: {val_loss:.4f}")
+
+            self.scheduler.step()
+            current_lr = self.scheduler.get_last_lr()[0]
+            logging.info(f"Epoch {epoch+1} Learning Rate: {current_lr:.6f}")
+            
             # Check for best model
             if val_metrics['loss'] < self.best_val_loss:
                 self.best_val_loss = val_metrics['loss']

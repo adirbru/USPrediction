@@ -69,6 +69,10 @@ def parse_args():
 
     parser.add_argument('--resize_to', type=int, nargs=2, default=(240, 240),
                         help='Target size (width height) to resize frames to during preprocessing')
+    parser.add_argument('--random_gamma_range', type=float, nargs=2, metavar=('MIN_GAMMA', 'MAX_GAMMA'),
+                        help='Min and max gamma values for random_gamma augmentation')
+    parser.add_argument('--speckle_noise_std', type=float,
+                        help='Standard deviation for speckle_noise augmentation on raw frames')
 
     args = parser.parse_args()
     

@@ -6,10 +6,12 @@
   },
 "augmentations":
   {
-    "in_place_augmentations": ["quantize", "resize"],
-    "enrichment_augmentations": ["random_resize_crop", "flip"],
+    "in_place_augmentations": ["resize", "quantize"],
+    "enrichment_augmentations": ["random_resize_crop", "flip", "random_gamma", "speckle_noise"],
     "random_resize_crop_percent": 20,
-    "resize_to": [240, 240]
+    "resize_to": [240, 240],
+    "random_gamma_range": [0.7, 1.5],
+    "speckle_noise_std": 0.05
   },
   "split": {
     "train_ratio": 0.9,
