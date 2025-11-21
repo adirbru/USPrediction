@@ -108,12 +108,116 @@ class QuantizeMaskAugmentation(Augmentation):
         return indices
 
 
+class GammaAugmentation(Augmentation):
+    """Gamma correction augmentation for ultrasound images.
+    
+    Simulates different gain/brightness settings that occur in ultrasound imaging
+    due to varying machine settings, operator preferences, or tissue characteristics.
+    This helps the model become robust to intensity variations in real-world scenarios.
+    
+    Why it's good for ultrasound segmentation:
+    - Ultrasound machines have adjustable gain/brightness controls that operators use
+    - Different tissue types and depths require different gain settings
+    - Helps model learn intensity-invariant features for better generalization
+    - Prevents overfitting to specific brightness levels in training data
+    """
+    def __init__(self, gamma_range: Tuple[float, float] = (0.5, 2.0)):
+        """
+        Args:
+            gamma_range: Tuple of (min_gamma, max_gamma) for random gamma selection.
+                         Values < 1.0 darken the image (e.g., 0.5), > 1.0 brighten it (e.g., 2.0).
+                         Note: The actual power applied is 1/gamma, so lower gamma = higher power = darker.
+        """
+        super().__init__(name='gamma', in_place=True, supported_types=[RawVideo])
+        self.gamma_range = gamma_range
+
+    def apply(self, img: np.ndarray) -> np.ndarray:
+        """
+        Apply random gamma correction to the image.
+        
+        Args:
+            img: Input image (H, W) or (H, W, C) as uint8 [0, 255]
+            
+        Returns:
+            Gamma-corrected image with same dtype and shape
+        """
+        # Randomly select gamma value from range
+        gamma = random.uniform(self.gamma_range[0], self.gamma_range[1])
+        
+        # Normalize to [0, 1] for gamma correction
+        img_normalized = img.astype(np.float32) / 255.0
+        
+        # Apply gamma correction: I_out = I_in^(1/gamma)
+        # Note: We use 1/gamma because we want gamma=2 to brighten (raise to 0.5 power)
+        img_gamma = np.power(img_normalized, 1.0 / gamma)
+        
+        # Convert back to uint8
+        img_gamma = np.clip(img_gamma * 255.0, 0, 255).astype(img.dtype)
+        
+        return img_gamma
+
+
+class SpeckleNoiseAugmentation(Augmentation):
+    """Speckle noise augmentation for ultrasound images.
+    
+    Simulates the inherent multiplicative speckle noise that is characteristic
+    of ultrasound imaging. Speckle is caused by interference of scattered waves
+    from sub-resolution scatterers and is a fundamental property of ultrasound images.
+    
+    Why it's good for ultrasound segmentation:
+    - Speckle is an inherent property of all ultrasound images, not just noise
+    - Different machines and frequencies produce different speckle patterns
+    - Helps model learn to segment structures despite texture variations
+    - Improves robustness to real-world ultrasound image quality variations
+    - Prevents model from overfitting to smooth, noise-free training images
+    """
+    def __init__(self, noise_variance: float = 0.1):
+        """
+        Args:
+            noise_variance: Variance of the multiplicative noise (0.0 to 1.0).
+                           Higher values add more noise. Typical range: 0.05-0.2
+        """
+        super().__init__(name='speckle', in_place=True, supported_types=[RawVideo])
+        self.noise_variance = noise_variance
+
+    def apply(self, img: np.ndarray) -> np.ndarray:
+        """
+        Apply multiplicative speckle noise to the image.
+        
+        Speckle noise follows a multiplicative model: I_noisy = I * (1 + n)
+        where n is noise following a distribution typical of ultrasound speckle.
+        
+        Args:
+            img: Input image (H, W) or (H, W, C) as uint8 [0, 255]
+            
+        Returns:
+            Image with speckle noise added, same dtype and shape
+        """
+        # Convert to float for noise addition
+        img_float = img.astype(np.float32)
+        
+        # Generate multiplicative noise
+        # For ultrasound speckle, we use Gaussian noise scaled by variance
+        # The noise is multiplicative: I_out = I_in * (1 + noise)
+        noise = np.random.normal(0.0, self.noise_variance, size=img.shape)
+        
+        # Apply multiplicative noise
+        img_noisy = img_float * (1.0 + noise)
+        
+        # Clip to valid range and convert back to original dtype
+        img_noisy = np.clip(img_noisy, 0, 255).astype(img.dtype)
+        
+        return img_noisy
+
+
 def get_augmentation(name: str, **kwargs) -> Augmentation:
     augmentations = {
         'resize': lambda: ResizeAugmentation(size=kwargs.get('resize_to', (240, 240))),
         'flip': FlipHorizontalAugmentation,
         'random_resize_crop': lambda: RandomResizeCropAugmentation(crop_percent=kwargs.get('random_resize_crop_percent', 20)),
         'quantize': QuantizeMaskAugmentation,
+        'gamma': lambda: GammaAugmentation(gamma_range=kwargs.get('gamma_range', (0.5, 2.0))),
+        'speckle': lambda: SpeckleNoiseAugmentation(noise_variance=kwargs.get('speckle_variance', 0.1)),
     }
     if name not in augmentations:
         raise ValueError(f"Unknown augmentation name: {name}")

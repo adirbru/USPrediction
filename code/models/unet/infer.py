@@ -11,7 +11,7 @@ from utils.video_utils import index_matrix_to_rgb
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: str = './inference_output'):
+def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: str = './inference_output', use_cpu: bool = False):
     """
     Loads model, performs inference on a single frame, and saves the resulting mask.
     
@@ -19,9 +19,10 @@ def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: 
         checkpoint_path: Path to the trained model weights.
         raw_frame_path: Optional path to a real raw frame image file (.png or .jpg).
         output_dir: Directory to save the predicted mask.
+        use_cpu: If True, force CPU inference even if CUDA is available.
     """
     # --- Setup ---
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu" if use_cpu else ("cuda:0" if torch.cuda.is_available() else "cpu"))
     logging.info(f"Using device: {device}")
     
     # --- Load Model ---
@@ -84,7 +85,9 @@ if __name__ == "__main__":
                         help='Path to a single raw input image file for testing (optional).')
     parser.add_argument('--output_dir', type=str, default='./inference_output',
                         help='Directory to save the resulting predicted mask image.')
+    parser.add_argument('--cpu', action='store_true',
+                        help='Force CPU inference even if CUDA is available.')
     
     args = parser.parse_args()
     
-    run_inference(args.checkpoint_path, args.raw_frame_path, args.output_dir)
+    run_inference(args.checkpoint_path, args.raw_frame_path, args.output_dir, use_cpu=args.cpu)
