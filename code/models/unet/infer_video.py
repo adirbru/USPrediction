@@ -137,3 +137,4 @@ if __name__ == "__main__":
     run_inference_on_video(args.checkpoint_path, args.raw_frames_dir, 
                           args.output_video_path, args.fps, use_cpu=args.cpu)
 
+
