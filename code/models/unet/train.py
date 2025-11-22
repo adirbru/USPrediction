@@ -297,7 +297,7 @@ class UNetTrainer:
     def _record_results(self, train_metrics_history, val_metrics_history):
         """Record final results and training history"""
         final_train = train_metrics_history[-1] if train_metrics_history else {}
-        final_val = val_metrics_history[-1] if val_metrics_history else {}
+        best_val = min(val_metrics_history or [{}], key=lambda history: history.get('loss'))
 
         self.training_results = {
             'train_subjects': self.train_subjects,
@@ -312,10 +312,10 @@ class UNetTrainer:
             'final_train_precision': final_train.get('precision', float('nan')),
             'final_train_recall': final_train.get('recall', float('nan')),
 
-            'final_val_loss': final_val.get('loss', self.best_val_loss),
-            'final_val_accuracy': final_val.get('accuracy', float('nan')),
-            'final_val_precision': final_val.get('precision', float('nan')),
-            'final_val_recall': final_val.get('recall', float('nan')),
+            'best_val_loss': best_val.get('loss', self.best_val_loss),
+            'best_val_accuracy': best_val.get('accuracy', float('nan')),
+            'best_val_precision': best_val.get('precision', float('nan')),
+            'best_val_recall': best_val.get('recall', float('nan')),
 
             # Full history
             'train_metrics_history': train_metrics_history,
@@ -347,11 +347,11 @@ class UNetTrainer:
         logging.info(f"  Precision: {results['final_train_precision']:.4f}")
         logging.info(f"  Recall:    {results['final_train_recall']:.4f}")
 
-        logging.info(f"\nFinal Validation Metrics:")
-        logging.info(f"  Loss:      {results['final_val_loss']:.4f}")
-        logging.info(f"  Accuracy:  {results['final_val_accuracy']:.4f}")
-        logging.info(f"  Precision: {results['final_val_precision']:.4f}")
-        logging.info(f"  Recall:    {results['final_val_recall']:.4f}")
+        logging.info(f"\nBest Validation Metrics:")
+        logging.info(f"  Loss:      {results['best_val_loss']:.4f}")
+        logging.info(f"  Accuracy:  {results['best_val_accuracy']:.4f}")
+        logging.info(f"  Precision: {results['best_val_precision']:.4f}")
+        logging.info(f"  Recall:    {results['best_val_recall']:.4f}")
 
         logging.info(f"\nBest validation loss: {results['best_val_loss']:.4f}")
 
