@@ -1,0 +1,150 @@
+2025-11-21 14:55:25,189 - INFO - Using device: cuda:0
+2025-11-21 14:55:25,190 - INFO - Loaded in-place augmentation: quantize
+2025-11-21 14:55:25,190 - INFO - Loaded in-place augmentation: resize
+2025-11-21 14:55:25,190 - INFO - Loaded in-place augmentation: speckle
+2025-11-21 14:55:25,190 - INFO - Loaded in-place augmentation: gamma
+2025-11-21 14:55:25,190 - INFO - Processing videos to extract frames...
+2025-11-21 14:55:25,265 - INFO - Loading existing augmented frames for random_resize_crop on recordings_24_enrollment01_multi_playing01
+2025-11-21 14:55:25,468 - INFO - Loading existing augmented frames for flip on recordings_24_enrollment01_multi_playing01
+2025-11-21 14:55:25,551 - INFO - Loading existing augmented frames for random_resize_crop on recordings_04_enrollment02_multi_playing02
+2025-11-21 14:55:25,572 - INFO - Loading existing augmented frames for flip on recordings_04_enrollment02_multi_playing02
+2025-11-21 14:55:25,643 - INFO - Loading existing augmented frames for random_resize_crop on recordings_01_enrollment02_multi_playing02
+2025-11-21 14:55:25,659 - INFO - Loading existing augmented frames for flip on recordings_01_enrollment02_multi_playing02
+2025-11-21 14:55:25,732 - INFO - Loading existing augmented frames for random_resize_crop on recordings_19_enrollment01_multi_playing01
+2025-11-21 14:55:25,938 - INFO - Loading existing augmented frames for flip on recordings_19_enrollment01_multi_playing01
+2025-11-21 14:55:26,019 - INFO - Loading existing augmented frames for random_resize_crop on recordings_25_enrollment01_multi_playing01
+2025-11-21 14:55:26,049 - INFO - Loading existing augmented frames for flip on recordings_25_enrollment01_multi_playing01
+2025-11-21 14:55:26,134 - INFO - Loading existing augmented frames for random_resize_crop on recordings_10_enrollment01_multi_playing01
+2025-11-21 14:55:26,160 - INFO - Loading existing augmented frames for flip on recordings_10_enrollment01_multi_playing01
+2025-11-21 14:55:26,246 - INFO - Loading existing augmented frames for random_resize_crop on recordings_25_enrollment02_multi_playing02
+2025-11-21 14:55:26,515 - INFO - Loading existing augmented frames for flip on recordings_25_enrollment02_multi_playing02
+2025-11-21 14:55:26,593 - INFO - Loading existing augmented frames for random_resize_crop on recordings_21_enrollment01_multi_playing01
+2025-11-21 14:55:26,612 - INFO - Loading existing augmented frames for flip on recordings_21_enrollment01_multi_playing01
+2025-11-21 14:55:26,681 - INFO - Loading existing augmented frames for random_resize_crop on recordings_01_enrollment03_multi_playing03
+2025-11-21 14:55:26,700 - INFO - Loading existing augmented frames for flip on recordings_01_enrollment03_multi_playing03
+2025-11-21 14:55:26,786 - INFO - Loading existing augmented frames for random_resize_crop on recordings_06_enrollment01_multi_playing01
+2025-11-21 14:55:26,823 - INFO - Loading existing augmented frames for flip on recordings_06_enrollment01_multi_playing01
+2025-11-21 14:55:27,247 - INFO - Loading existing augmented frames for random_resize_crop on recordings_05_enrollment02_multi_playing02
+2025-11-21 14:55:27,267 - INFO - Loading existing augmented frames for flip on recordings_05_enrollment02_multi_playing02
+2025-11-21 14:55:27,349 - INFO - Loading existing augmented frames for random_resize_crop on recordings_17_enrollment01_multi_playing01
+2025-11-21 14:55:27,377 - INFO - Loading existing augmented frames for flip on recordings_17_enrollment01_multi_playing01
+2025-11-21 14:55:27,449 - INFO - Loading existing augmented frames for random_resize_crop on recordings_20_enrollment02_multi_playing02
+2025-11-21 14:55:27,469 - INFO - Loading existing augmented frames for flip on recordings_20_enrollment02_multi_playing02
+2025-11-21 14:55:27,546 - INFO - Loading existing augmented frames for random_resize_crop on recordings_06_enrollment02_multi_playing02
+2025-11-21 14:55:27,577 - INFO - Loading existing augmented frames for flip on recordings_06_enrollment02_multi_playing02
+2025-11-21 14:55:27,659 - INFO - Loading existing augmented frames for random_resize_crop on recordings_20_enrollment01_multi_playing01
+2025-11-21 14:55:27,678 - INFO - Loading existing augmented frames for flip on recordings_20_enrollment01_multi_playing01
+2025-11-21 14:55:27,749 - INFO - Loading existing augmented frames for random_resize_crop on recordings_10_enrollment02_multi_playing02
+2025-11-21 14:55:28,155 - INFO - Loading existing augmented frames for flip on recordings_10_enrollment02_multi_playing02
+2025-11-21 14:55:28,228 - INFO - Loading existing augmented frames for random_resize_crop on recordings_19_enrollment02_multi_playing02
+2025-11-21 14:55:28,248 - INFO - Loading existing augmented frames for flip on recordings_19_enrollment02_multi_playing02
+2025-11-21 14:55:28,319 - INFO - Loading existing augmented frames for random_resize_crop on recordings_01_enrollment01_multi_playing01
+2025-11-21 14:55:28,342 - INFO - Loading existing augmented frames for flip on recordings_01_enrollment01_multi_playing01
+2025-11-21 14:55:28,424 - INFO - Loading existing augmented frames for random_resize_crop on recordings_21_enrollment02_multi_playing02
+2025-11-21 14:55:28,451 - INFO - Loading existing augmented frames for flip on recordings_21_enrollment02_multi_playing02
+2025-11-21 14:55:28,536 - INFO - Loading existing augmented frames for random_resize_crop on recordings_23_enrollment01_multi_playing01
+2025-11-21 14:55:28,568 - INFO - Loading existing augmented frames for flip on recordings_23_enrollment01_multi_playing01
+2025-11-21 14:55:28,651 - INFO - Loading existing augmented frames for random_resize_crop on recordings_04_enrollment01_multi_playing01
+2025-11-21 14:55:28,673 - INFO - Loading existing augmented frames for flip on recordings_04_enrollment01_multi_playing01
+2025-11-21 14:55:29,198 - INFO - Loading existing augmented frames for random_resize_crop on recordings_17_enrollment02_multi_playing02
+2025-11-21 14:55:29,226 - INFO - Loading existing augmented frames for flip on recordings_17_enrollment02_multi_playing02
+2025-11-21 14:55:29,321 - INFO - Loading existing augmented frames for random_resize_crop on recordings_24_enrollment02_multi_playing02
+2025-11-21 14:55:29,351 - INFO - Loading existing augmented frames for flip on recordings_24_enrollment02_multi_playing02
+2025-11-21 14:55:29,434 - INFO - Loading existing augmented frames for random_resize_crop on recordings_05_enrollment01_multi_playing01
+2025-11-21 14:55:29,458 - INFO - Loading existing augmented frames for flip on recordings_05_enrollment01_multi_playing01
+2025-11-21 14:55:29,568 - INFO - Loading existing augmented frames for random_resize_crop on recordings_23_enrollment02_multi_playing02
+2025-11-21 14:55:29,601 - INFO - Loading existing augmented frames for flip on recordings_23_enrollment02_multi_playing02
+2025-11-21 14:55:29,624 - INFO - Dataset initialized with 75 video pairs.
+2025-11-21 14:55:29,629 - INFO - Train samples: 55983, Val samples: 8715
+2025-11-21 14:55:30,423 - INFO - Using class weights: [0.1 1.  1.  1.  1.  1.  1.  1. ]
+2025-11-21 14:55:30,424 - INFO - 
+============================================================
+Starting Training for 10 Epochs
+============================================================
+2025-11-21 14:55:30,424 - INFO - 
+--- Epoch 1/10 ---
+Train: 100%|██████████| 6998/6998 [07:28<00:00, 15.61it/s]
+2025-11-21 15:02:58,690 - INFO - Epoch 1 Train - Loss: 0.1266, Accuracy: 0.9499, Precision: 0.8982, Recall: 0.9499
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.51it/s]
+2025-11-21 15:03:51,839 - INFO - Epoch 1 Val   - Loss: 1.3570, Accuracy: 0.7481, Precision: 0.6480, Recall: 0.7458
+2025-11-21 15:03:51,841 - INFO - New best model saved.
+2025-11-21 15:03:51,841 - INFO - 
+--- Epoch 2/10 ---
+Train: 100%|██████████| 6998/6998 [07:31<00:00, 15.51it/s]
+2025-11-21 15:11:23,110 - INFO - Epoch 2 Train - Loss: 0.0768, Accuracy: 0.9692, Precision: 0.9289, Recall: 0.9641
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.52it/s]
+2025-11-21 15:12:16,235 - INFO - Epoch 2 Val   - Loss: 1.5039, Accuracy: 0.7351, Precision: 0.6286, Recall: 0.7167
+2025-11-21 15:12:16,235 - INFO - 
+--- Epoch 3/10 ---
+Train: 100%|██████████| 6998/6998 [07:32<00:00, 15.45it/s]
+2025-11-21 15:19:49,093 - INFO - Epoch 3 Train - Loss: 0.0711, Accuracy: 0.9716, Precision: 0.9338, Recall: 0.9661
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.56it/s]
+2025-11-21 15:20:42,107 - INFO - Epoch 3 Val   - Loss: 1.5656, Accuracy: 0.7294, Precision: 0.6320, Recall: 0.7050
+2025-11-21 15:20:42,107 - INFO - 
+--- Epoch 4/10 ---
+Train: 100%|██████████| 6998/6998 [07:33<00:00, 15.42it/s]
+2025-11-21 15:28:16,050 - INFO - Epoch 4 Train - Loss: 0.0679, Accuracy: 0.9730, Precision: 0.9365, Recall: 0.9672
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.46it/s]
+2025-11-21 15:29:09,333 - INFO - Epoch 4 Val   - Loss: 1.5939, Accuracy: 0.7324, Precision: 0.6379, Recall: 0.7094
+2025-11-21 15:29:09,333 - INFO - 
+--- Epoch 5/10 ---
+Train: 100%|██████████| 6998/6998 [07:34<00:00, 15.41it/s]
+2025-11-21 15:36:43,380 - INFO - Epoch 5 Train - Loss: 0.0655, Accuracy: 0.9740, Precision: 0.9385, Recall: 0.9681
+Val  : 100%|██████████| 1090/1090 [00:54<00:00, 19.89it/s]
+2025-11-21 15:37:38,181 - INFO - Epoch 5 Val   - Loss: 1.6849, Accuracy: 0.7298, Precision: 0.6423, Recall: 0.6928
+2025-11-21 15:37:38,181 - INFO - 
+--- Epoch 6/10 ---
+Train: 100%|██████████| 6998/6998 [07:35<00:00, 15.38it/s]
+2025-11-21 15:45:13,307 - INFO - Epoch 6 Train - Loss: 0.0636, Accuracy: 0.9748, Precision: 0.9400, Recall: 0.9688
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.38it/s]
+2025-11-21 15:46:06,805 - INFO - Epoch 6 Val   - Loss: 1.6381, Accuracy: 0.7387, Precision: 0.6443, Recall: 0.7145
+2025-11-21 15:46:06,805 - INFO - 
+--- Epoch 7/10 ---
+Train: 100%|██████████| 6998/6998 [07:28<00:00, 15.62it/s]
+2025-11-21 15:53:34,915 - INFO - Epoch 7 Train - Loss: 0.0620, Accuracy: 0.9755, Precision: 0.9414, Recall: 0.9694
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.49it/s]
+2025-11-21 15:54:28,114 - INFO - Epoch 7 Val   - Loss: 1.7230, Accuracy: 0.7419, Precision: 0.6450, Recall: 0.7025
+2025-11-21 15:54:28,115 - INFO - 
+--- Epoch 8/10 ---
+Train: 100%|██████████| 6998/6998 [07:29<00:00, 15.55it/s]
+2025-11-21 16:01:58,043 - INFO - Epoch 8 Train - Loss: 0.0607, Accuracy: 0.9761, Precision: 0.9426, Recall: 0.9699
+Val  : 100%|██████████| 1090/1090 [00:52<00:00, 20.60it/s]
+2025-11-21 16:02:50,963 - INFO - Epoch 8 Val   - Loss: 1.8941, Accuracy: 0.7301, Precision: 0.6490, Recall: 0.7019
+2025-11-21 16:02:50,963 - INFO - 
+--- Epoch 9/10 ---
+Train: 100%|██████████| 6998/6998 [07:31<00:00, 15.49it/s]
+2025-11-21 16:10:22,863 - INFO - Epoch 9 Train - Loss: 0.0594, Accuracy: 0.9767, Precision: 0.9438, Recall: 0.9704
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.28it/s]
+2025-11-21 16:11:16,613 - INFO - Epoch 9 Val   - Loss: 1.8250, Accuracy: 0.7283, Precision: 0.6270, Recall: 0.6913
+2025-11-21 16:11:16,613 - INFO - 
+--- Epoch 10/10 ---
+Train: 100%|██████████| 6998/6998 [07:32<00:00, 15.46it/s]
+2025-11-21 16:18:49,185 - INFO - Epoch 10 Train - Loss: 0.0583, Accuracy: 0.9771, Precision: 0.9447, Recall: 0.9709
+Val  : 100%|██████████| 1090/1090 [00:53<00:00, 20.53it/s]
+2025-11-21 16:19:42,287 - INFO - Epoch 10 Val   - Loss: 1.9782, Accuracy: 0.7267, Precision: 0.6362, Recall: 0.6921
+2025-11-21 16:19:42,588 - INFO - 
+Saved best model (val_loss: 1.3570) to ./best_unet.pth
+2025-11-21 16:19:42,588 - INFO - 
+============================================================
+2025-11-21 16:19:42,588 - INFO - TRAINING SUMMARY
+2025-11-21 16:19:42,588 - INFO - ============================================================
+2025-11-21 16:19:42,588 - INFO - Training subjects: ['01', '04', '05', '06', '10', '19', '21', '23', '24', '25'] (10 subjects)
+2025-11-21 16:19:42,588 - INFO - Validation subjects: ['17', '20'] (2 subjects)
+2025-11-21 16:19:42,588 - INFO - Training samples: 55983
+2025-11-21 16:19:42,588 - INFO - Validation samples: 8715
+2025-11-21 16:19:42,588 - INFO - 
+Final Training Metrics:
+2025-11-21 16:19:42,588 - INFO -   Loss:      0.0583
+2025-11-21 16:19:42,588 - INFO -   Accuracy:  0.9771
+2025-11-21 16:19:42,588 - INFO -   Precision: 0.9447
+2025-11-21 16:19:42,588 - INFO -   Recall:    0.9709
+2025-11-21 16:19:42,588 - INFO - 
+Final Validation Metrics:
+2025-11-21 16:19:42,588 - INFO -   Loss:      1.3570
+2025-11-21 16:19:42,588 - INFO -   Accuracy:  0.7481
+2025-11-21 16:19:42,588 - INFO -   Precision: 0.6480
+2025-11-21 16:19:42,588 - INFO -   Recall:    0.7458
+2025-11-21 16:19:42,589 - INFO - 
+Best validation loss: 1.3570
+2025-11-21 16:19:42,589 - INFO - 
+Training complete!
