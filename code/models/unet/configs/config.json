@@ -6,10 +6,12 @@
   },
 "augmentations":
   {
-    "in_place_augmentations": ["quantize", "resize"],
+    "in_place_augmentations": ["quantize", "resize", "speckle", "gamma"],
     "enrichment_augmentations": ["random_resize_crop", "flip"],
     "random_resize_crop_percent": 20,
-    "resize_to": [240, 240]
+    "resize_to": [240, 240],
+    "speckle_variance": 0.1,
+    "gamma_range": [0.5, 2.0]
   },
   "split": {
     "train_ratio": 0.9,

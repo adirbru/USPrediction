@@ -1,0 +1,9 @@
+2025-11-21 20:53:02,925 - INFO - Using device: cpu
+2025-11-21 20:53:03,465 - INFO - Successfully loaded model weights from: best_unet.pth
+2025-11-21 20:53:03,467 - INFO - Attempting to load real frame from /home/eyal.amdur/US_Project/temp_frames/raw/recordings_17_enrollment01_multi_playing01/frame_000100.png
+2025-11-21 20:53:03,471 - INFO - Loaded real frame of shape torch.Size([1, 1, 240, 240])
+2025-11-21 20:53:03,471 - INFO - Starting inference...
+2025-11-21 20:53:03,585 - INFO - Inference complete. Converting prediction to color mask.
+2025-11-21 20:53:03,593 - INFO - 
+--- SUCCESS ---
+Predicted color mask saved to: /home/eyal.amdur/US_Project/inference_output/predicted_mask.png
