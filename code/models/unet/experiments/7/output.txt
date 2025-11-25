@@ -1,0 +1,120 @@
+2025-11-24 18:35:46,906 - INFO - Using device: cuda:0
+2025-11-24 18:35:46,907 - INFO - Loaded in-place augmentation: quantize
+2025-11-24 18:35:46,907 - INFO - Loaded in-place augmentation: resize
+2025-11-24 18:35:46,907 - INFO - Loaded in-place augmentation: speckle
+2025-11-24 18:35:46,907 - INFO - Loaded in-place augmentation: gamma
+2025-11-24 18:35:46,907 - INFO - Processing videos to extract frames...
+2025-11-24 18:35:51,188 - INFO - Dataset initialized with 25 video pairs.
+2025-11-24 18:35:51,191 - INFO - Train samples: 18661, Val samples: 2905
+2025-11-24 18:35:52,010 - INFO - Using class weights: [0.1 1.  1.  1.  1.  1.  1.  1. ]
+2025-11-24 18:35:52,011 - INFO - 
+============================================================
+Starting Training for 10 Epochs
+============================================================
+2025-11-24 18:35:52,011 - INFO - 
+--- Epoch 1/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:25<00:00, 16.06it/s]
+2025-11-24 18:38:17,261 - INFO - Epoch 1 Train - Loss: 0.1772, Accuracy: 0.9190, Precision: 0.8757, Recall: 0.9394
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 20.99it/s]
+2025-11-24 18:38:34,607 - INFO - Epoch 1 Val   - Loss: 1.4086, Accuracy: 0.7502, Precision: 0.6493, Recall: 0.7329
+2025-11-24 18:38:34,609 - INFO - New best model saved.
+2025-11-24 18:38:34,609 - INFO - 
+--- Epoch 2/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.15it/s]
+2025-11-24 18:40:59,060 - INFO - Epoch 2 Train - Loss: 0.0772, Accuracy: 0.9709, Precision: 0.9295, Recall: 0.9654
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.06it/s]
+2025-11-24 18:41:16,346 - INFO - Epoch 2 Val   - Loss: 1.5151, Accuracy: 0.7471, Precision: 0.6497, Recall: 0.7291
+2025-11-24 18:41:16,346 - INFO - 
+--- Epoch 3/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.17it/s]
+2025-11-24 18:43:40,620 - INFO - Epoch 3 Train - Loss: 0.0701, Accuracy: 0.9733, Precision: 0.9344, Recall: 0.9675
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.03it/s]
+2025-11-24 18:43:57,931 - INFO - Epoch 3 Val   - Loss: 1.5913, Accuracy: 0.7469, Precision: 0.6501, Recall: 0.7351
+2025-11-24 18:43:57,931 - INFO - 
+--- Epoch 4/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.19it/s]
+2025-11-24 18:46:22,035 - INFO - Epoch 4 Train - Loss: 0.0666, Accuracy: 0.9746, Precision: 0.9374, Recall: 0.9686
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.11it/s]
+2025-11-24 18:46:39,277 - INFO - Epoch 4 Val   - Loss: 1.6728, Accuracy: 0.7408, Precision: 0.6422, Recall: 0.7347
+2025-11-24 18:46:39,277 - INFO - 
+--- Epoch 5/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.16it/s]
+2025-11-24 18:49:03,623 - INFO - Epoch 5 Train - Loss: 0.0640, Accuracy: 0.9756, Precision: 0.9396, Recall: 0.9695
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.07it/s]
+2025-11-24 18:49:20,904 - INFO - Epoch 5 Val   - Loss: 1.6578, Accuracy: 0.7506, Precision: 0.6599, Recall: 0.7305
+2025-11-24 18:49:20,905 - INFO - 
+--- Epoch 6/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:25<00:00, 16.09it/s]
+2025-11-24 18:51:45,913 - INFO - Epoch 6 Train - Loss: 0.0620, Accuracy: 0.9764, Precision: 0.9413, Recall: 0.9703
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.06it/s]
+2025-11-24 18:52:03,198 - INFO - Epoch 6 Val   - Loss: 1.7675, Accuracy: 0.7409, Precision: 0.6513, Recall: 0.7374
+2025-11-24 18:52:03,199 - INFO - 
+--- Epoch 7/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.10it/s]
+2025-11-24 18:54:28,101 - INFO - Epoch 7 Train - Loss: 0.0603, Accuracy: 0.9771, Precision: 0.9428, Recall: 0.9709
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.06it/s]
+2025-11-24 18:54:45,389 - INFO - Epoch 7 Val   - Loss: 1.8475, Accuracy: 0.7313, Precision: 0.6411, Recall: 0.7207
+2025-11-24 18:54:45,389 - INFO - 
+--- Epoch 8/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.19it/s]
+2025-11-24 18:57:09,489 - INFO - Epoch 8 Train - Loss: 0.0588, Accuracy: 0.9777, Precision: 0.9441, Recall: 0.9714
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.07it/s]
+2025-11-24 18:57:26,767 - INFO - Epoch 8 Val   - Loss: 1.8456, Accuracy: 0.7378, Precision: 0.6445, Recall: 0.7209
+2025-11-24 18:57:26,767 - INFO - 
+--- Epoch 9/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.13it/s]
+2025-11-24 18:59:51,379 - INFO - Epoch 9 Train - Loss: 0.0574, Accuracy: 0.9783, Precision: 0.9454, Recall: 0.9720
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.00it/s]
+2025-11-24 19:00:08,714 - INFO - Epoch 9 Val   - Loss: 1.8535, Accuracy: 0.7360, Precision: 0.6486, Recall: 0.7193
+2025-11-24 19:00:08,714 - INFO - 
+--- Epoch 10/10 ---
+
+Train: 100%|██████████| 2333/2333 [02:24<00:00, 16.12it/s]
+2025-11-24 19:02:33,446 - INFO - Epoch 10 Train - Loss: 0.0562, Accuracy: 0.9788, Precision: 0.9466, Recall: 0.9724
+
+Val  : 100%|██████████| 364/364 [00:17<00:00, 21.14it/s]
+2025-11-24 19:02:50,667 - INFO - Epoch 10 Val   - Loss: 1.9150, Accuracy: 0.7360, Precision: 0.6451, Recall: 0.7250
+2025-11-24 19:02:51,049 - INFO - 
+Saved best model (val_loss: 1.4086) to ./best_unet.pth
+2025-11-24 19:02:51,049 - INFO - 
+============================================================
+2025-11-24 19:02:51,049 - INFO - TRAINING SUMMARY
+2025-11-24 19:02:51,049 - INFO - ============================================================
+2025-11-24 19:02:51,049 - INFO - Training subjects: ['01', '04', '05', '06', '10', '19', '21', '23', '24', '25'] (10 subjects)
+2025-11-24 19:02:51,049 - INFO - Validation subjects: ['17', '20'] (2 subjects)
+2025-11-24 19:02:51,049 - INFO - Training samples: 18661
+2025-11-24 19:02:51,049 - INFO - Validation samples: 2905
+2025-11-24 19:02:51,050 - INFO - 
+Final Training Metrics:
+2025-11-24 19:02:51,050 - INFO -   Loss:      0.0562
+2025-11-24 19:02:51,050 - INFO -   Accuracy:  0.9788
+2025-11-24 19:02:51,050 - INFO -   Precision: 0.9466
+2025-11-24 19:02:51,050 - INFO -   Recall:    0.9724
+2025-11-24 19:02:51,050 - INFO - 
+Best Validation Metrics:
+2025-11-24 19:02:51,050 - INFO -   Loss:      1.4086
+2025-11-24 19:02:51,050 - INFO -   Accuracy:  0.7502
+2025-11-24 19:02:51,050 - INFO -   Precision: 0.6493
+2025-11-24 19:02:51,050 - INFO -   Recall:    0.7329
+2025-11-24 19:02:51,050 - INFO - 
+Best validation loss: 1.4086
+2025-11-24 19:02:51,050 - INFO - 
+Training complete!
