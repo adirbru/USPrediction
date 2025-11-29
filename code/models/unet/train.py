@@ -214,25 +214,6 @@ class UNetTrainer:
         self.best_model = None
         self.training_results = {}
 
-    def _calculate_class_weights(self):
-        """
-        Calculate class weights for CrossEntropyLoss to address class imbalance.
-        Since Black (index 0) is the background and dominant, we give it a lower weight.
-        """
-        # Define a base weight array: 8 classes (0 to 7)
-        weights = np.ones(8, dtype=np.float32)
-        
-        # Class 0 (Black - Background) is typically dominant and should be penalized less
-        # We can set its weight significantly lower than 1.0
-        weights[0] = 0.1 # Example: 10% of the normal weight
-        
-        # Other classes (1-7, your target segments) keep higher weight
-        weights[1:] = 1.0 # Standard weight for foreground classes
-        
-        logging.info(f"Using class weights: {weights}")
-        return torch.from_numpy(weights)
-
-
     def _split_subjects(self):
         """Splits the dataset's subject IDs into train and validation sets."""
         all_subjects = self.dataset.get_subject_ids()
