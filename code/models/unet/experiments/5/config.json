@@ -1,0 +1,27 @@
+{
+  "data": {
+    "raw_video_dir": "/home/crl05/USPrediction/dataset/raw",
+    "masked_video_dir": "/home/crl05/USPrediction/dataset/masks",
+    "temp_dir": "./temp_frames"
+  },
+"augmentations":
+  {
+    "in_place_augmentations": ["quantize", "resize"],
+    "enrichment_augmentations": ["random_resize_crop", "flip"],
+    "random_resize_crop_percent": 10,
+    "resize_to": [240, 240]
+  },
+  "split": {
+    "train_ratio": 0.9,
+    "random_seed": 42
+  },
+  "training": {
+    "epochs": 50,
+    "batch_size": 10,
+    "learning_rate": 0.0001,
+    "num_workers": 10
+  },
+  "model": {
+    "checkpoint_path": "./best_unet.pth"
+  }
+}
