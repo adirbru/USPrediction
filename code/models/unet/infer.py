@@ -11,7 +11,7 @@ from utils.video_utils import index_matrix_to_rgb
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: str = './inference_output', use_cpu: bool = False):
+def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: str = './inference_output', use_cpu: bool = False, output_name='predicted_image.png'):
     """
     Loads model, performs inference on a single frame, and saves the resulting mask.
     
@@ -71,7 +71,7 @@ def run_inference(checkpoint_path: str, raw_frame_path: str = None, output_dir: 
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
     
-    output_filepath = output_path / "predicted_mask.png"
+    output_filepath = output_path / output_name
     cv2.imwrite(str(output_filepath), rgb_mask_matrix)
     
     logging.info(f"\n--- SUCCESS ---\nPredicted color mask saved to: {output_filepath}")
@@ -87,7 +87,9 @@ if __name__ == "__main__":
                         help='Directory to save the resulting predicted mask image.')
     parser.add_argument('--cpu', action='store_true',
                         help='Force CPU inference even if CUDA is available.')
-    
+    parser.add_argument('--output_name', type=str, default='predicted_mask.png',
+                        help='filename to save the resulting predicted mask image.')
+       
     args = parser.parse_args()
     
-    run_inference(args.checkpoint_path, args.raw_frame_path, args.output_dir, use_cpu=args.cpu)
+    run_inference(args.checkpoint_path, args.raw_frame_path, args.output_dir, use_cpu=args.cpu, output_name=args.output_name)
