@@ -69,6 +69,21 @@ def parse_args():
 
     parser.add_argument('--resize_to', type=int, nargs=2, default=(240, 240),
                         help='Target size (width height) to resize frames to during preprocessing')
+    
+    # Regularization and training improvements
+    parser.add_argument('--weight_decay', type=float, default=1e-5,
+                        help='Weight decay (L2 regularization) for optimizer (default: 1e-5)')
+    parser.add_argument('--scheduler_patience', type=int, default=5,
+                        help='Number of epochs with no improvement before reducing learning rate (default: 5)')
+    parser.add_argument('--scheduler_factor', type=float, default=0.5,
+                        help='Factor by which learning rate is reduced (default: 0.5)')
+    parser.add_argument('--early_stop_patience', type=int, default=10,
+                        help='Number of epochs with no improvement before early stopping (default: 10, set to 0 to disable)')
+    parser.add_argument('--early_stop_min_delta', type=float, default=1e-4,
+                        help='Minimum change to qualify as an improvement for early stopping (default: 1e-4)')
+    
+    parser.add_argument('--cpu', action='store_true',
+                        help='Force CPU training even if CUDA is available (useful for CUDA compatibility issues)')
 
     args = parser.parse_args()
     

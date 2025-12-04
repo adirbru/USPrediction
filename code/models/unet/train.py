@@ -167,7 +167,13 @@ class UNetTrainer:
     """U-Net trainer with subject-based train/validation split"""
     def __init__(self, args):
         self.args = args
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # Check if CPU is forced
+        use_cpu = getattr(args, 'cpu', False)
+        if use_cpu:
+            self.device = torch.device("cpu")
+            logging.info("CPU mode forced by --cpu flag")
+        else:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         logging.info(f"Using device: {self.device}")
         
         # --- Data Setup ---
@@ -186,11 +192,23 @@ class UNetTrainer:
         # --- Model and Weights Setup ---
         self.model = get_model().to(self.device)
         
-        # --- NEW: Calculate and assign class weights ---
-        self.class_weights = self._calculate_class_weights()
+        self.criterion = nn.CrossEntropyLoss()
         
-        self.criterion = nn.CrossEntropyLoss(weight=self.class_weights.to(self.device))
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+        # Add weight decay for L2 regularization (helps prevent overfitting)
+        weight_decay = getattr(self.args, 'weight_decay', 1e-5)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.args.learning_rate, weight_decay=weight_decay)
+        
+        # Learning rate scheduler - reduces LR when validation loss plateaus
+        scheduler_patience = getattr(self.args, 'scheduler_patience', 5)
+        scheduler_factor = getattr(self.args, 'scheduler_factor', 0.5)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, mode='min', factor=scheduler_factor, patience=scheduler_patience
+        )
+        
+        # Early stopping parameters
+        self.early_stop_patience = getattr(self.args, 'early_stop_patience', 10)
+        self.early_stop_min_delta = getattr(self.args, 'early_stop_min_delta', 1e-4)
+        self.early_stop_counter = 0
         
         self.best_val_loss = float('inf')
         self.best_model = None
@@ -284,11 +302,26 @@ class UNetTrainer:
                         f"Precision: {val_metrics['precision']:.4f}, "
                         f"Recall: {val_metrics['recall']:.4f}")
 
+            # Update learning rate scheduler based on validation loss
+            self.scheduler.step(val_metrics['loss'])
+            current_lr = self.optimizer.param_groups[0]['lr']
+            logging.info(f"Current learning rate: {current_lr:.6f}")
+
             # Check for best model
-            if val_metrics['loss'] < self.best_val_loss:
+            improvement = self.best_val_loss - val_metrics['loss']
+            if improvement > self.early_stop_min_delta:
+                # Significant improvement - reset early stop counter
                 self.best_val_loss = val_metrics['loss']
                 self.best_model = self.model.state_dict()
-                logging.info(f"New best model saved.")
+                self.early_stop_counter = 0
+                logging.info(f"New best model saved. (Improvement: {improvement:.6f})")
+            else:
+                # No significant improvement
+                self.early_stop_counter += 1
+                if self.early_stop_counter >= self.early_stop_patience:
+                    logging.info(f"\nEarly stopping triggered! No improvement for {self.early_stop_patience} epochs.")
+                    logging.info(f"Best validation loss: {self.best_val_loss:.4f} at epoch {epoch+1 - self.early_stop_patience}")
+                    break
 
         self._record_results(train_metrics_history, val_metrics_history)
         self.save_best_model()
