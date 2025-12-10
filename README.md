@@ -33,7 +33,7 @@ US_Project/
 
 Side-by-side comparison showing **Raw Video | Ground Truth Masks | Model Predictions**:
 
-<video src="visual_results/recordings_05_enrollment01_multi_playing01_comparison.mp4" width="100%" controls>
+<video src="visual_results/recordings_05_enrollment01_multi_playing01_comparison_short.mp4" width="100%" controls>
   Your browser does not support the video tag.
 </video>
 
