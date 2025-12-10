@@ -169,8 +169,6 @@ def process_video_pair(raw_video_path: Path, masked_video_path: Path,
         
         # Convert prediction to RGB
         pred_rgb = index_matrix_to_rgb(mask_indices)
-        # Convert from RGB to BGR for OpenCV
-        pred_bgr = cv2.cvtColor(pred_rgb, cv2.COLOR_RGB2BGR)
         
         # Create side-by-side frame
         combined_frame = np.zeros((output_height, output_width, 3), dtype=np.uint8)
@@ -178,7 +176,7 @@ def process_video_pair(raw_video_path: Path, masked_video_path: Path,
         # Place the three frames side by side
         combined_frame[counter_height:, 0:w] = raw_frame_bgr
         combined_frame[counter_height:, w:2*w] = mask_frame
-        combined_frame[counter_height:, 2*w:3*w] = pred_bgr
+        combined_frame[counter_height:, 2*w:3*w] = pred_rgb
         
         # Add frame counter at the top
         frame_text = f"Frame: {frame_idx:06d} / {num_frames-1:06d}"
