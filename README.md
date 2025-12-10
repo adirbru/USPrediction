@@ -33,9 +33,9 @@ US_Project/
 
 Side-by-side comparison showing **Raw Video | Ground Truth Masks | Model Predictions**:
 
-<video src="visual_results/recordings_05_enrollment01_multi_playing01_comparison.mp4" width="100%" controls>
-  Your browser does not support the video tag.
-</video>
+<p align="center">
+  <img src="visual_results/recordings_05_enrollment01_multi_playing01_comparison.gif" width=100% />
+</p>
 
 The comparison video includes:
 - Frame counter at the top
