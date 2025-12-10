@@ -15,6 +15,7 @@ dependencies = [
     "segmentation-models-pytorch~=0.3",
     "scikit-learn~=1.5",
     "tqdm~=4.66",
+    "matplotlib~=3.10.7"
 ]
 
 [build-system]

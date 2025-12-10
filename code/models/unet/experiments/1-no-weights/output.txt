@@ -1,0 +1,43 @@
+2025-11-29 23:46:24,330 - INFO - Using device: cuda:0
+2025-11-29 23:46:24,330 - INFO - Loaded in-place augmentation: quantize
+2025-11-29 23:46:24,330 - INFO - Loaded in-place augmentation: resize
+2025-11-29 23:46:24,330 - INFO - Processing videos to extract frames...
+2025-11-29 23:46:25,133 - INFO - Dataset initialized with 25 video pairs.
+2025-11-29 23:46:25,134 - INFO - Train samples: 18499, Val samples: 3421
+2025-11-29 23:46:25,380 - INFO - 
+============================================================
+Starting Training for 1 Epochs
+============================================================
+2025-11-29 23:46:25,380 - INFO - 
+--- Epoch 1/1 ---
+Train: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 2313/2313 [01:18<00:00, 29.39it/s]
+2025-11-29 23:47:44,092 - INFO - Epoch 1 Train - Loss: 0.1755, Accuracy: 0.9599, Precision: 0.9409, Recall: 0.9337
+Val  : 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████| 428/428 [00:07<00:00, 60.63it/s]
+2025-11-29 23:47:51,152 - INFO - Epoch 1 Val   - Loss: 0.8037, Accuracy: 0.8315, Precision: 0.7268, Recall: 0.7924
+2025-11-29 23:47:51,153 - INFO - New best model saved.
+2025-11-29 23:47:51,249 - INFO - 
+Saved best model (val_loss: 0.8037) to ./best_unet.pth
+2025-11-29 23:47:51,249 - INFO - 
+============================================================
+2025-11-29 23:47:51,249 - INFO - TRAINING SUMMARY
+2025-11-29 23:47:51,249 - INFO - ============================================================
+2025-11-29 23:47:51,249 - INFO - Training subjects: ['01', '04', '06', '10', '17', '19', '20', '21', '23', '24'] (10 subjects)
+2025-11-29 23:47:51,249 - INFO - Validation subjects: ['05', '25'] (2 subjects)
+2025-11-29 23:47:51,249 - INFO - Training samples: 18499
+2025-11-29 23:47:51,249 - INFO - Validation samples: 3421
+2025-11-29 23:47:51,249 - INFO - 
+Final Training Metrics:
+2025-11-29 23:47:51,249 - INFO -   Loss:      0.1755
+2025-11-29 23:47:51,249 - INFO -   Accuracy:  0.9599
+2025-11-29 23:47:51,249 - INFO -   Precision: 0.9409
+2025-11-29 23:47:51,249 - INFO -   Recall:    0.9337
+2025-11-29 23:47:51,249 - INFO - 
+Best Validation Metrics:
+2025-11-29 23:47:51,249 - INFO -   Loss:      0.8037
+2025-11-29 23:47:51,249 - INFO -   Accuracy:  0.8315
+2025-11-29 23:47:51,249 - INFO -   Precision: 0.7268
+2025-11-29 23:47:51,249 - INFO -   Recall:    0.7924
+2025-11-29 23:47:51,249 - INFO - 
+Best validation loss: 0.8037
+2025-11-29 23:47:51,249 - INFO - 
+Training complete!
