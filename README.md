@@ -44,7 +44,7 @@ The comparison video includes:
 
 ## Authors
 
-- Adir Bruchim (adir.bruchim@campus.technion.ac.il)
-- Eyal Amdur (eyal.amdur@campus.technion.ac.il)
+- Adir Bruchim (adirbru1@gmail.com)
+- Eyal Amdur (eyalamdur@gmail.com)
 
 Technion - Israel Institute of Technology
