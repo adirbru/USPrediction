@@ -112,31 +112,19 @@ def process_video_pair(raw_video_path: Path, masked_video_path: Path,
     
     # Create video writer for output
     # Output will be 3 frames side by side, so width is 3*w
-    # Plus space for frame counter at top
-    counter_height = 50
+    # Plus space for header (frame counter + labels) at top
+    header_height = 70
     output_width = 3 * w
-    output_height = h + counter_height
+    output_height = h + header_height
     
-    # Use XVID codec for better Windows compatibility
-    # XVID is well-supported on Windows and creates .avi files
-    # Change extension to .avi for XVID codec
-    output_video_path_avi = output_video_path.with_suffix('.avi')
-    fourcc = cv2.VideoWriter.fourcc(*'XVID')
-    video_writer = cv2.VideoWriter(str(output_video_path_avi), fourcc, fps, (output_width, output_height))
+    # Use mp4v codec for .mp4 output
+    fourcc = cv2.VideoWriter.fourcc(*'mp4v')
+    video_writer = cv2.VideoWriter(str(output_video_path), fourcc, fps, (output_width, output_height))
     
     if not video_writer.isOpened():
-        # Fallback to mp4v if XVID doesn't work
-        logging.warning("XVID codec not available, trying mp4v...")
-        fourcc = cv2.VideoWriter.fourcc(*'mp4v')
-        video_writer = cv2.VideoWriter(str(output_video_path), fourcc, fps, (output_width, output_height))
-        if video_writer.isOpened():
-            logging.warning("Using mp4v codec. Note: This may not play well on Windows. Consider converting with ffmpeg.")
-        else:
-            raise RuntimeError(f"Could not open video writer for {output_video_path}. Tried XVID and mp4v codecs.")
-    else:
-        # Update output path to use .avi extension
-        output_video_path = output_video_path_avi
-        logging.info(f"Using XVID codec, output will be: {output_video_path}")
+        raise RuntimeError(f"Could not open video writer for {output_video_path}")
+    
+    logging.info(f"Output video: {output_video_path}")
     
     # Process each frame
     for frame_idx in range(num_frames):
@@ -159,8 +147,12 @@ def process_video_pair(raw_video_path: Path, masked_video_path: Path,
             continue
         
         # Run inference to get prediction
+        # Model was trained on 240x240, so resize input for inference
+        model_input_size = (240, 240)
+        raw_frame_resized = cv2.resize(raw_frame, model_input_size, interpolation=cv2.INTER_AREA)
+        
         # Prepare input tensor: (1, 1, H, W) normalized
-        input_tensor = torch.from_numpy(raw_frame).float().unsqueeze(0).unsqueeze(0) / 255.0
+        input_tensor = torch.from_numpy(raw_frame_resized).float().unsqueeze(0).unsqueeze(0) / 255.0
         input_tensor = input_tensor.to(device)
         
         with torch.no_grad():
@@ -170,40 +162,42 @@ def process_video_pair(raw_video_path: Path, masked_video_path: Path,
         # Convert prediction to RGB
         pred_rgb = index_matrix_to_rgb(mask_indices)
         
+        # Resize prediction back to original frame size
+        pred_rgb = cv2.resize(pred_rgb, (w, h), interpolation=cv2.INTER_NEAREST)
+        
         # Create side-by-side frame
         combined_frame = np.zeros((output_height, output_width, 3), dtype=np.uint8)
         
-        # Place the three frames side by side
-        combined_frame[counter_height:, 0:w] = raw_frame_bgr
-        combined_frame[counter_height:, w:2*w] = mask_frame
-        combined_frame[counter_height:, 2*w:3*w] = pred_rgb
+        # Place the three frames side by side (below header)
+        combined_frame[header_height:, 0:w] = raw_frame_bgr
+        combined_frame[header_height:, w:2*w] = mask_frame
+        combined_frame[header_height:, 2*w:3*w] = pred_rgb
         
-        # Add frame counter at the top
-        frame_text = f"Frame: {frame_idx:06d} / {num_frames-1:06d}"
+        # Draw header background
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1.0
-        thickness = 2
         text_color = (255, 255, 255)  # White
         bg_color = (0, 0, 0)  # Black
+        cv2.rectangle(combined_frame, (0, 0), (output_width, header_height), bg_color, -1)
         
-        # Get text size
-        (text_width, text_height), baseline = cv2.getTextSize(frame_text, font, font_scale, thickness)
-        
-        # Draw background rectangle
-        cv2.rectangle(combined_frame, (0, 0), (output_width, counter_height), bg_color, -1)
-        
-        # Draw text centered
+        # Draw frame counter at top of header
+        frame_text = f"Frame: {frame_idx:06d} / {num_frames-1:06d}"
+        font_scale = 0.8
+        thickness = 2
+        (text_width, text_height), _ = cv2.getTextSize(frame_text, font, font_scale, thickness)
         text_x = (output_width - text_width) // 2
-        text_y = (counter_height + text_height) // 2
+        text_y = 25  # Fixed position near top
         cv2.putText(combined_frame, frame_text, (text_x, text_y), font, font_scale, text_color, thickness)
         
-        # Add labels below the counter
-        label_y = counter_height - 10
-        label_font_scale = 0.6
-        label_thickness = 1
-        cv2.putText(combined_frame, "Raw Video", (w//2 - 50, label_y), font, label_font_scale, text_color, label_thickness)
-        cv2.putText(combined_frame, "Raw Masks", (w + w//2 - 50, label_y), font, label_font_scale, text_color, label_thickness)
-        cv2.putText(combined_frame, "Predictions", (2*w + w//2 - 50, label_y), font, label_font_scale, text_color, label_thickness)
+        # Draw labels at bottom of header (above video frames)
+        label_y = header_height - 15
+        label_font_scale = 0.7
+        label_thickness = 2
+        
+        # Center each label in its panel
+        for i, label in enumerate(["Raw Video", "Ground Truth", "Prediction"]):
+            (label_width, _), _ = cv2.getTextSize(label, font, label_font_scale, label_thickness)
+            label_x = i * w + (w - label_width) // 2
+            cv2.putText(combined_frame, label, (label_x, label_y), font, label_font_scale, text_color, label_thickness)
         
         # Write frame to video
         video_writer.write(combined_frame)
