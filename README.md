@@ -33,9 +33,7 @@ US_Project/
 
 Side-by-side comparison showing **Raw Video | Ground Truth Masks | Model Predictions**:
 
-<p align="center">
-  <img src="visual_results/recordings_05_enrollment01_multi_playing01_comparison.gif" width=100% />
-</p>
+https://github.com/user-attachments/assets/3e881822-265a-44e2-bc76-7496bb4ed673
 
 The comparison video includes:
 - Frame counter at the top
